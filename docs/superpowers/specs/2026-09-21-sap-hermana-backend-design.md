@@ -8,6 +8,17 @@ already-decided domain model and business rules (see
 NestJS app. It does not repeat domain/business-rule decisions already closed
 there — it references them.
 
+## Skill stacks
+
+- Backend (`/backend`, NestJS): implementation follows the `nestjs-stack`
+  skill (loads `nestjs-best-practices` + `nestjs-pro` together) — module
+  structure, entity/DTO conventions, guards, migrations, testing, hardening
+  all defer to that skill's patterns over ad-hoc choices.
+- Frontend (`/frontend`, Next.js): implementation follows the `nextjs-stack`
+  skill (loads the Next.js/UI/UX/design-taste/Vercel skill set together) —
+  out of scope for this spec (backend-only), noted here so the frontend
+  brainstorm/plan picks it up.
+
 ## Scope and target directory
 
 `sap-hermana-backend/` is a delivered package (TypeORM `data-source.ts`,

@@ -1,1 +1,8 @@
 .worktrees/
+.env
+
+# docs/ tracks only the backend module documentation (docs/backend/) —
+# everything else (planning specs, one-off plans, scratch notes) stays local
+docs/*
+!docs/backend
+!docs/backend/**

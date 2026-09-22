@@ -37,12 +37,35 @@ y el plan tarea-por-tarea en `docs/superpowers/plans/2026-09-21-sap-hermana-back
 ## Estado
 
 La implementación completa del backend (auth, los 5 módulos de dominio,
-reportes con agregación consciente de la zona horaria de Lima, y Swagger)
-está en el PR [#1](https://github.com/AlfredoNavarroDev/ganamas/pull/1),
-pendiente de merge a `main`. El frontend aún es el scaffold por defecto de
+reportes con agregación consciente de la zona horaria de Lima, y Swagger) ya
+está mergeada a `main`. El frontend aún es el scaffold por defecto de
 `create-next-app`.
 
-## Desarrollo
+## Levantar todo con Docker (automático)
+
+```bash
+docker compose up -d --build
+```
+
+Esto levanta Postgres local, corre migraciones + seed del usuario único, y
+arranca backend (`:3000`) y frontend (`:3001`) — sin pasos manuales. Login de
+prueba: usuario `admin`, password `change-me` (defaults, ver abajo).
+
+Los defaults funcionan sin configuración. Para cambiarlos, copiar `.env.example`
+a `.env` en la raíz y editar (`POSTGRES_*`, `JWT_SECRET`, `SEED_USERNAME`,
+`SEED_PASSWORD`, etc.) — nunca commitear ese `.env`, ya está en `.gitignore`.
+
+`NODE_ENV=production` dentro de los contenedores implica que Swagger
+(`/api/docs`) queda deshabilitado por diseño; para probar la API interactiva
+usar `npm run start:dev` local (ver abajo) en vez de Docker.
+
+```bash
+docker compose down          # detiene todo, conserva los datos de Postgres
+docker compose down -v       # detiene todo y borra también los datos
+docker compose logs -f       # logs en vivo de los 3 servicios
+```
+
+## Desarrollo local (sin Docker)
 
 ```bash
 # Backend
@@ -58,4 +81,5 @@ pnpm install
 pnpm dev                # http://localhost:3000 (o el puerto libre siguiente)
 ```
 
-Variables de entorno del backend: ver `backend/.env.example`.
+Variables de entorno del backend (modo local, contra Supabase): ver
+`backend/.env.example`.

@@ -66,11 +66,11 @@ describe('Reports (e2e)', () => {
       .set('Authorization', `Bearer ${token}`)
       .expect(200);
 
-    const sundayRow = response.body.daily.find((row: { day: string }) =>
-      row.day.startsWith('2026-01-04'),
+    const sundayRow = response.body.daily.find(
+      (row: { day: string }) => row.day === '2026-01-04',
     );
-    const mondayRow = response.body.daily.find((row: { day: string }) =>
-      row.day.startsWith('2026-01-05'),
+    const mondayRow = response.body.daily.find(
+      (row: { day: string }) => row.day === '2026-01-05',
     );
 
     expect(sundayRow).toBeDefined();

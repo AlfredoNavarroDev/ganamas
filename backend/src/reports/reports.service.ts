@@ -11,7 +11,7 @@ export class ReportsService {
 
   async weeklySummary(businessId: string, from: string, to: string) {
     const daily = await this.dataSource.query(
-      `SELECT date_trunc('day', sold_at AT TIME ZONE 'America/Lima') AS day,
+      `SELECT to_char(date_trunc('day', sold_at AT TIME ZONE 'America/Lima'), 'YYYY-MM-DD') AS day,
               COALESCE(SUM(total), 0) AS revenue,
               COALESCE(SUM(quantity * unit_cost), 0) AS cost,
               COALESCE(SUM(profit), 0) AS profit,
@@ -37,7 +37,7 @@ export class ReportsService {
 
   async kpis(businessId: string, from: string, to: string) {
     const bestDayRows = await this.dataSource.query(
-      `SELECT date_trunc('day', sold_at AT TIME ZONE 'America/Lima') AS day,
+      `SELECT to_char(date_trunc('day', sold_at AT TIME ZONE 'America/Lima'), 'YYYY-MM-DD') AS day,
               COALESCE(SUM(profit), 0) AS profit
          FROM sale
         WHERE business_id = $1 AND sold_at BETWEEN $2 AND $3

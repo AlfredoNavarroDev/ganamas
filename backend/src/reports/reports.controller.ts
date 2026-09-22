@@ -1,8 +1,9 @@
 import { Controller, Get, Query } from '@nestjs/common';
-import { ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { ReportsService } from './reports.service';
 import { ReportsQueryDto } from './dto/reports-query.dto';
 
+@ApiBearerAuth()
 @ApiTags('Reports')
 @Controller('reports')
 export class ReportsController {

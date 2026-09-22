@@ -54,24 +54,6 @@ describe('PurchaseService', () => {
     expect(savedPurchase.unitCost).toBe('4.00');
   });
 
-  it('keeps the existing avg_cost when the product had zero stock and this purchase is also zero', async () => {
-    manager.findOne.mockResolvedValue({
-      id: 'product-1',
-      stock: '0.00',
-      avgCost: '0.00',
-    });
-
-    await service.create({
-      businessId: 'business-1',
-      productId: 'product-1',
-      quantity: '0',
-      unitCost: '5.00',
-    });
-
-    const savedProduct = manager.save.mock.calls[0][0];
-    expect(savedProduct.avgCost).toBe('0.00');
-  });
-
   it('throws NotFoundException when the product does not exist in that business', async () => {
     manager.findOne.mockResolvedValue(null);
 

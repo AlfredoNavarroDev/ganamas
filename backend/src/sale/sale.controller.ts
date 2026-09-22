@@ -7,11 +7,12 @@ import {
   Post,
   Query,
 } from '@nestjs/common';
-import { ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { SaleService } from './sale.service';
 import { CreateSaleDto } from './dto/create-sale.dto';
 import { ListSalesQueryDto } from './dto/list-sales-query.dto';
 
+@ApiBearerAuth()
 @ApiTags('Sales')
 @Controller('sales')
 export class SaleController {

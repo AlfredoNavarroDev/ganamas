@@ -9,6 +9,7 @@ import { Sale } from './entities/sale.entity';
 import { AuthModule } from './auth/auth.module';
 import { BusinessModule } from './business/business.module';
 import { ProductModule } from './product/product.module';
+import { PurchaseModule } from './purchase/purchase.module';
 
 @Module({
   imports: [
@@ -21,13 +22,17 @@ import { ProductModule } from './product/product.module';
         url: config.getOrThrow<string>('DATABASE_URL'),
         entities: [User, Business, Product, Purchase, Sale],
         synchronize: false,
-        ssl: config.get('DATABASE_SSL') === 'true' ? { rejectUnauthorized: false } : false,
+        ssl:
+          config.get('DATABASE_SSL') === 'true'
+            ? { rejectUnauthorized: false }
+            : false,
         logging: config.get('NODE_ENV') === 'development',
       }),
     }),
     AuthModule,
     BusinessModule,
     ProductModule,
+    PurchaseModule,
   ],
 })
 export class AppModule {}

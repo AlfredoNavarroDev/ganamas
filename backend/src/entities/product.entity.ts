@@ -31,7 +31,7 @@ export class Product {
   @Column({ length: 20, default: 'unidad' })
   unit: 'unidad' | 'kg';
 
-  @Column({ length: 100, nullable: true })
+  @Column({ type: 'varchar', length: 100, nullable: true })
   category: string | null;
 
   @Column({ type: 'numeric', precision: 10, scale: 2, default: 0 })

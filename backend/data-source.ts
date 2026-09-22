@@ -9,5 +9,6 @@ export const AppDataSource = new DataSource({
   entities: ['src/**/*.entity.ts'],
   migrations: ['src/migrations/*.ts'],
   synchronize: false, // nunca true en este proyecto: todo cambio de esquema pasa por migración
+  ssl: process.env.DATABASE_SSL === 'true' ? { rejectUnauthorized: false } : false,
   logging: process.env.NODE_ENV === 'development',
 });

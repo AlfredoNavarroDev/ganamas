@@ -6,6 +6,7 @@ import { Business } from './entities/business.entity';
 import { Product } from './entities/product.entity';
 import { Purchase } from './entities/purchase.entity';
 import { Sale } from './entities/sale.entity';
+import { AuthModule } from './auth/auth.module';
 
 @Module({
   imports: [
@@ -22,6 +23,7 @@ import { Sale } from './entities/sale.entity';
         logging: config.get('NODE_ENV') === 'development',
       }),
     }),
+    AuthModule,
   ],
 })
 export class AppModule {}

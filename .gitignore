@@ -6,3 +6,6 @@
 docs/*
 !docs/backend
 !docs/backend/**
+.neon
+.env.neon
+node_modules/

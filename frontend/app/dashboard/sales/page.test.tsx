@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import SalesPage from "./page";
+import { ToastProvider } from "@/components/ui/toast";
 import { setToken } from "@/lib/auth";
 import { setActiveBusinessId } from "@/lib/business";
 
@@ -17,6 +18,14 @@ function jsonResponse(data: unknown, status = 200) {
     status,
     headers: { "Content-Type": "application/json" },
   });
+}
+
+function renderPage() {
+  return render(
+    <ToastProvider>
+      <SalesPage />
+    </ToastProvider>
+  );
 }
 
 const product = {
@@ -60,13 +69,13 @@ describe("SalesPage", () => {
   });
 
   it("redirects to /login when there is no token", async () => {
-    render(<SalesPage />);
+    renderPage();
     await waitFor(() => expect(replace).toHaveBeenCalledWith("/login"));
   });
 
   it("redirects to /dashboard when there is no active business", async () => {
     setToken("token-123");
-    render(<SalesPage />);
+    renderPage();
     await waitFor(() => expect(replace).toHaveBeenCalledWith("/dashboard"));
   });
 
@@ -74,7 +83,7 @@ describe("SalesPage", () => {
     setToken("token-123");
     setActiveBusinessId("biz-1");
     stubLoad([product], []);
-    render(<SalesPage />);
+    renderPage();
 
     expect(await screen.findByText(/todavía no registraste ventas/i)).toBeInTheDocument();
   });
@@ -83,7 +92,7 @@ describe("SalesPage", () => {
     setToken("token-123");
     setActiveBusinessId("biz-1");
     stubLoad([product], [sale]);
-    render(<SalesPage />);
+    renderPage();
 
     expect(await screen.findByText(/2\.00 kg × 5\.00 = 10\.00 · efectivo/)).toBeInTheDocument();
   });
@@ -92,7 +101,7 @@ describe("SalesPage", () => {
     setToken("token-123");
     setActiveBusinessId("biz-1");
     stubLoad([product], []);
-    render(<SalesPage />);
+    renderPage();
 
     const priceInput = await screen.findByLabelText(/precio unitario/i);
     await waitFor(() => expect(priceInput).toHaveValue("5.00"));
@@ -109,7 +118,7 @@ describe("SalesPage", () => {
     });
     vi.stubGlobal("fetch", fetchMock);
     const user = userEvent.setup();
-    render(<SalesPage />);
+    renderPage();
 
     await screen.findByLabelText(/precio unitario/i);
     await user.type(screen.getByLabelText(/^cantidad$/i), "2");
@@ -131,33 +140,13 @@ describe("SalesPage", () => {
     });
     vi.stubGlobal("fetch", fetchMock);
     const user = userEvent.setup();
-    render(<SalesPage />);
+    renderPage();
 
     await screen.findByLabelText(/precio unitario/i);
     await user.type(screen.getByLabelText(/^cantidad$/i), "999");
     await user.click(screen.getByRole("button", { name: /registrar venta/i }));
 
     expect(await screen.findByText(/stock insuficiente/i)).toBeInTheDocument();
-  });
-
-  it("deletes a sale", async () => {
-    setToken("token-123");
-    setActiveBusinessId("biz-1");
-    const fetchMock = vi.fn(async (url: string, init?: RequestInit) => {
-      if (url.includes("/products")) return jsonResponse([product]);
-      if (init?.method === "DELETE") return jsonResponse({});
-      if (url.includes("/sales")) return jsonResponse({ data: [sale], total: 1 });
-      throw new Error(`unexpected url ${url}`);
-    });
-    vi.stubGlobal("fetch", fetchMock);
-    const user = userEvent.setup();
-    render(<SalesPage />);
-
-    const rowText = /2\.00 kg × 5\.00 = 10\.00 · efectivo/;
-    await screen.findByText(rowText);
-    await user.click(screen.getByRole("button", { name: /eliminar/i }));
-
-    await waitFor(() => expect(screen.queryByText(rowText)).not.toBeInTheDocument());
   });
 
   it("shows an error alert when sales fail to load", async () => {
@@ -169,8 +158,92 @@ describe("SalesPage", () => {
         throw new Error("network down");
       }),
     );
-    render(<SalesPage />);
+    renderPage();
 
     expect(await screen.findByText(/no se pudo conectar con el servidor/i)).toBeInTheDocument();
+  });
+});
+
+const productOption = {
+  id: "prod-1",
+  name: "Arroz 1kg",
+  price: "4.50",
+  unit: "kg" as const,
+  stock: "24",
+  active: true,
+};
+
+const deleteFlowSale = {
+  id: "sale-1",
+  product: { id: "prod-1", name: "Arroz 1kg", unit: "kg" as const },
+  quantity: "2",
+  unitPrice: "4.50",
+  total: "9.00",
+  paymentMethod: "efectivo" as const,
+  soldAt: "2026-09-22T10:00:00.000Z",
+};
+
+describe("SalesPage delete flow", () => {
+  beforeEach(() => {
+    localStorage.clear();
+    push.mockClear();
+    replace.mockClear();
+    setToken("token-123");
+    setActiveBusinessId("biz-1");
+  });
+
+  it("shows a confirmation dialog instead of deleting immediately", async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(jsonResponse([productOption]))
+      .mockResolvedValueOnce(jsonResponse({ data: [deleteFlowSale] }));
+    vi.stubGlobal("fetch", fetchMock);
+    const user = userEvent.setup();
+    renderPage();
+
+    await user.click(await screen.findByRole("button", { name: "Eliminar" }));
+
+    expect(screen.getByText('¿Eliminar esta venta?')).toBeInTheDocument();
+  });
+
+  it("does not delete when Cancelar is clicked", async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(jsonResponse([productOption]))
+      .mockResolvedValueOnce(jsonResponse({ data: [deleteFlowSale] }));
+    vi.stubGlobal("fetch", fetchMock);
+    const user = userEvent.setup();
+    renderPage();
+
+    await user.click(await screen.findByRole("button", { name: "Eliminar" }));
+    await user.click(screen.getByRole("button", { name: "Cancelar" }));
+
+    expect(screen.queryByText('¿Eliminar esta venta?')).not.toBeInTheDocument();
+    expect(screen.getByText("Arroz 1kg")).toBeInTheDocument();
+  });
+
+  it("deletes and shows a toast when confirmed", async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(jsonResponse([productOption]))
+      .mockResolvedValueOnce(jsonResponse({ data: [deleteFlowSale] }))
+      .mockResolvedValueOnce(new Response(null, { status: 204 }))
+      .mockResolvedValueOnce(jsonResponse([productOption]));
+    vi.stubGlobal("fetch", fetchMock);
+    const user = userEvent.setup();
+    renderPage();
+
+    await user.click(await screen.findByRole("button", { name: "Eliminar" }));
+    await user.click(screen.getByRole("button", { name: "Eliminar venta" }));
+
+    await waitFor(() => expect(screen.queryByText("Arroz 1kg")).not.toBeInTheDocument());
+    expect(await screen.findByText("Venta eliminada")).toBeInTheDocument();
+  });
+
+  it("shows a skeleton while sales are loading", () => {
+    vi.stubGlobal("fetch", vi.fn(() => new Promise(() => {})));
+    renderPage();
+
+    expect(screen.getByTestId("sales-skeleton")).toBeInTheDocument();
   });
 });

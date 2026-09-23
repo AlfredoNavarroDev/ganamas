@@ -8,6 +8,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { Skeleton } from "@/components/ui/skeleton";
+import { useToast } from "@/components/ui/toast";
 import { getToken } from "@/lib/auth";
 import { getActiveBusinessId } from "@/lib/business";
 import { authFetch } from "@/lib/api";
@@ -48,6 +51,10 @@ export default function SalesPage() {
   const [paymentMethod, setPaymentMethod] = useState<Sale["paymentMethod"]>("efectivo");
   const [creating, setCreating] = useState(false);
   const [createError, setCreateError] = useState<string | null>(null);
+
+  const [deleteTarget, setDeleteTarget] = useState<Sale | null>(null);
+  const [deleting, setDeleting] = useState(false);
+  const { toast } = useToast();
 
   useEffect(() => {
     if (!getToken()) {
@@ -134,6 +141,7 @@ export default function SalesPage() {
       const created = (await res.json()) as Sale;
       setSales((prev) => [created, ...(prev ?? [])]);
       setQuantity("");
+      toast("Venta registrada");
       loadProducts(businessId);
     } catch {
       setCreateError("No se pudo conectar con el servidor. Probá de nuevo.");
@@ -144,6 +152,7 @@ export default function SalesPage() {
 
   async function handleDelete(id: string) {
     setLoadError(null);
+    setDeleting(true);
     try {
       const res = await authFetch(`/sales/${id}`, { method: "DELETE" });
       if (!res.ok) {
@@ -151,16 +160,31 @@ export default function SalesPage() {
         return;
       }
       setSales((prev) => (prev ?? []).filter((s) => s.id !== id));
+      setDeleteTarget(null);
       if (businessId) loadProducts(businessId);
+      toast("Venta eliminada");
     } catch {
       setLoadError("No se pudo conectar con el servidor. Probá de nuevo.");
+    } finally {
+      setDeleting(false);
     }
   }
 
   if (!checked) return null;
 
+  if (sales === null && !loadError) {
+    return (
+      <main className="flex min-h-dvh flex-1 flex-col items-center px-6 py-16">
+        <div className="flex w-full max-w-2xl flex-col gap-6">
+          <Skeleton data-testid="sales-skeleton" className="h-48 w-full" />
+          <Skeleton className="h-64 w-full" />
+        </div>
+      </main>
+    );
+  }
+
   return (
-    <main className="flex min-h-dvh flex-1 flex-col items-center bg-background px-6 py-16">
+    <main className="flex min-h-dvh flex-1 flex-col items-center px-6 py-16">
       <div className="flex w-full max-w-2xl flex-col gap-6">
         <Link href="/dashboard" className="text-sm text-muted-foreground hover:text-foreground">
           ← Volver
@@ -269,7 +293,7 @@ export default function SalesPage() {
                     {sale.paymentMethod}
                   </span>
                 </div>
-                <Button type="button" variant="outline" onClick={() => handleDelete(sale.id)}>
+                <Button type="button" variant="outline" onClick={() => setDeleteTarget(sale)}>
                   Eliminar
                 </Button>
               </div>
@@ -277,6 +301,18 @@ export default function SalesPage() {
           </CardContent>
         </Card>
       </div>
+
+      <ConfirmDialog
+        open={deleteTarget !== null}
+        onOpenChange={(open) => {
+          if (!open) setDeleteTarget(null);
+        }}
+        title="¿Eliminar esta venta?"
+        description="Esta acción no se puede deshacer y devolverá el stock al inventario."
+        confirmLabel="Eliminar venta"
+        confirming={deleting}
+        onConfirm={() => deleteTarget && handleDelete(deleteTarget.id)}
+      />
     </main>
   );
 }

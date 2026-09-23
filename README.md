@@ -43,27 +43,29 @@ está mergeada a `main`. El frontend aún es el scaffold por defecto de
 
 ## Levantar todo con Docker (automático)
 
+La DB siempre es Supabase — un solo modo, sin flags.
+
+Copiar `.env.example` a `.env` en la raíz y completar `DATABASE_URL` con el
+connection string real del *session pooler* de Supabase (no el host directo:
+es IPv6-only y no conecta desde la mayoría de setups de Docker Desktop).
+Nunca commitear ese `.env` — ya está en `.gitignore`.
+
 ```bash
 docker compose up -d --build
 ```
 
-Esto levanta Postgres local, corre migraciones + seed del usuario único, y
-arranca backend (`:3000`) y frontend (`:3001`) — sin pasos manuales. Login de
-prueba: usuario `admin`, password `change-me` (defaults, ver abajo).
+Corre migraciones + seed del usuario único (solo crea el usuario si no
+existe — no pisa su password en restarts posteriores) contra Supabase, y
+levanta frontend (`:3000`) y backend (`:3001`).
 
-Los defaults funcionan sin configuración. Para cambiarlos, copiar `.env.example`
-a `.env` en la raíz y editar (`POSTGRES_*`, `JWT_SECRET`, `SEED_USERNAME`,
-`SEED_PASSWORD`, etc.) — nunca commitear ese `.env`, ya está en `.gitignore`.
+```bash
+docker compose down          # detiene todo
+docker compose logs -f       # logs en vivo de los 2 servicios
+```
 
 `NODE_ENV=production` dentro de los contenedores implica que Swagger
 (`/api/docs`) queda deshabilitado por diseño; para probar la API interactiva
 usar `npm run start:dev` local (ver abajo) en vez de Docker.
-
-```bash
-docker compose down          # detiene todo, conserva los datos de Postgres
-docker compose down -v       # detiene todo y borra también los datos
-docker compose logs -f       # logs en vivo de los 3 servicios
-```
 
 ## Desarrollo local (sin Docker)
 

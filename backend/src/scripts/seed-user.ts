@@ -12,14 +12,16 @@ async function seed() {
 
   await AppDataSource.initialize();
 
-  const passwordHash = await bcrypt.hash(password, 12);
+  const userRepo = AppDataSource.getRepository(User);
+  const existing = await userRepo.findOneBy({ username });
 
-  await AppDataSource.getRepository(User).upsert(
-    { username, passwordHash },
-    ['username'],
-  );
-
-  console.log(`Usuario "${username}" creado/actualizado correctamente.`);
+  if (existing) {
+    console.log(`Usuario "${username}" ya existe, se omite el seed.`);
+  } else {
+    const passwordHash = await bcrypt.hash(password, 12);
+    await userRepo.insert({ username, passwordHash });
+    console.log(`Usuario "${username}" creado correctamente.`);
+  }
 
   await AppDataSource.destroy();
 }

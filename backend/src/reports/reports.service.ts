@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { DataSource } from 'typeorm';
+import Decimal from 'decimal.js';
 
 @Injectable()
 export class ReportsService {
@@ -33,6 +34,52 @@ export class ReportsService {
     );
 
     return { daily, byPaymentMethod };
+  }
+
+  async summary(businessId: string, from: string, to: string) {
+    const totalsRows = await this.dataSource.query(
+      `SELECT COALESCE(SUM(total), 0) AS revenue,
+              COALESCE(SUM(profit), 0) AS profit,
+              COUNT(*) AS count
+         FROM sale
+        WHERE business_id = $1 AND sold_at BETWEEN $2 AND $3`,
+      [businessId, from, to],
+    );
+
+    const topProductRows = await this.dataSource.query(
+      `SELECT p.id AS "productId", p.name AS "productName",
+              COALESCE(SUM(s.profit), 0) AS profit
+         FROM sale s
+         JOIN product p ON p.id = s.product_id
+        WHERE s.business_id = $1 AND s.sold_at BETWEEN $2 AND $3
+        GROUP BY p.id, p.name
+        ORDER BY profit DESC
+        LIMIT 1`,
+      [businessId, from, to],
+    );
+
+    const byPaymentMethod = await this.dataSource.query(
+      `SELECT payment_method AS "paymentMethod",
+              COALESCE(SUM(total), 0) AS revenue
+         FROM sale
+        WHERE business_id = $1 AND sold_at BETWEEN $2 AND $3
+        GROUP BY payment_method`,
+      [businessId, from, to],
+    );
+
+    const revenue = new Decimal(totalsRows[0]?.revenue ?? 0);
+    const profit = new Decimal(totalsRows[0]?.profit ?? 0);
+    const count = Number(totalsRows[0]?.count ?? 0);
+    const avgTicket = count > 0 ? revenue.dividedBy(count) : new Decimal(0);
+
+    return {
+      revenue: revenue.toFixed(2),
+      profit: profit.toFixed(2),
+      count,
+      avgTicket: avgTicket.toFixed(2),
+      topProduct: topProductRows[0] ?? null,
+      byPaymentMethod,
+    };
   }
 
   async kpis(businessId: string, from: string, to: string) {

@@ -189,6 +189,27 @@ describe("ProductsPage delete flow", () => {
     expect(await screen.findByText("Producto eliminado")).toBeInTheDocument();
   });
 
+  it("closes the dialog and warns with a toast when the delete request fails", async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(jsonResponse([product]))
+      .mockResolvedValueOnce(jsonResponse({ message: "boom" }, 500));
+    vi.stubGlobal("fetch", fetchMock);
+    const user = userEvent.setup();
+    renderPage();
+
+    await user.click(await screen.findByRole("button", { name: "Eliminar" }));
+    await user.click(screen.getByRole("button", { name: "Eliminar producto" }));
+
+    expect(
+      await screen.findByText("No se pudo eliminar el producto."),
+    ).toBeInTheDocument();
+    await waitFor(() =>
+      expect(screen.queryByText('¿Eliminar "Arroz 1kg"?')).not.toBeInTheDocument(),
+    );
+    expect(screen.getByText("Arroz 1kg")).toBeInTheDocument();
+  });
+
   it("shows a skeleton while products are loading", () => {
     vi.stubGlobal("fetch", vi.fn(() => new Promise(() => {})));
     renderPage();

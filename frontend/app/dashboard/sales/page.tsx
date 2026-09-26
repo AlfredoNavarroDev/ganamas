@@ -156,7 +156,10 @@ export default function SalesPage() {
     try {
       const res = await authFetch(`/sales/${id}`, { method: "DELETE" });
       if (!res.ok) {
-        setLoadError("No se pudo eliminar la venta.");
+        // Close the dialog first: otherwise the failure feedback renders behind
+        // the modal backdrop and the user sees nothing happen.
+        setDeleteTarget(null);
+        toast("No se pudo eliminar la venta.", "destructive");
         return;
       }
       setSales((prev) => (prev ?? []).filter((s) => s.id !== id));
@@ -164,7 +167,9 @@ export default function SalesPage() {
       if (businessId) loadProducts(businessId);
       toast("Venta eliminada");
     } catch {
+      setDeleteTarget(null);
       setLoadError("No se pudo conectar con el servidor. Probá de nuevo.");
+      toast("No se pudo eliminar la venta.", "destructive");
     } finally {
       setDeleting(false);
     }
@@ -281,10 +286,11 @@ export default function SalesPage() {
               <p className="text-sm text-muted-foreground">Todavía no registraste ventas.</p>
             ) : null}
 
-            {sales?.map((sale) => (
+            {sales?.map((sale, index) => (
               <div
                 key={sale.id}
-                className="flex items-center justify-between gap-3 rounded-md border p-3"
+                className="motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-bottom-2 motion-safe:duration-500 motion-safe:ease-[cubic-bezier(0.16,1,0.3,1)] motion-safe:fill-mode-backwards flex items-center justify-between gap-3 rounded-md border p-3"
+                style={{ animationDelay: `${index * 60}ms` }}
               >
                 <div className="flex flex-col">
                   <span className="font-medium">{sale.product.name}</span>

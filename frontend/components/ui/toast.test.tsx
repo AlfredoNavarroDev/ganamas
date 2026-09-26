@@ -26,6 +26,26 @@ describe("ToastProvider", () => {
     expect(await screen.findByText("Producto creado")).toBeInTheDocument();
   });
 
+  it("keeps the live region mounted before any toast is announced", async () => {
+    const user = userEvent.setup();
+    render(
+      <ToastProvider>
+        <Trigger />
+      </ToastProvider>
+    );
+
+    const liveRegion = screen.getByRole("status");
+    expect(liveRegion).toHaveAttribute("aria-live", "polite");
+    expect(liveRegion).toBeEmptyDOMElement();
+
+    await user.click(screen.getByRole("button", { name: "disparar" }));
+
+    expect(await screen.findByText("Producto creado")).toBeInTheDocument();
+    // The message must land inside the pre-existing region, not be a new one.
+    expect(screen.getAllByRole("status")).toHaveLength(1);
+    expect(liveRegion).toHaveTextContent("Producto creado");
+  });
+
   it("throws when useToast is used outside a ToastProvider", () => {
     function Bare() {
       useToast();

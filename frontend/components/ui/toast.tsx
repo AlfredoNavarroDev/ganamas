@@ -50,11 +50,16 @@ function ToastProvider({ children }: { children: React.ReactNode }) {
   return (
     <ToastContext.Provider value={{ toast }}>
       {children}
-      <div className="pointer-events-none fixed inset-x-0 bottom-4 z-100 flex flex-col items-center gap-2 px-4">
+      {/* The live region is the always-mounted viewport, not the individual toast:
+          screen readers only announce changes inside a region that already existed. */}
+      <div
+        role="status"
+        aria-live="polite"
+        className="pointer-events-none fixed inset-x-0 bottom-4 z-100 flex flex-col items-center gap-2 px-4"
+      >
         {toasts.map((t) => (
           <div
             key={t.id}
-            role="status"
             className={cn(
               "pointer-events-auto relative w-full max-w-sm overflow-hidden rounded-2xl border border-[color:var(--glass-border)] bg-[var(--glass-bg-strong)] py-2.5 pr-4 pl-5 text-sm text-foreground shadow-[var(--glass-shadow)] backdrop-blur-[var(--glass-blur)] before:absolute before:inset-y-0 before:left-0 before:w-1",
               t.leaving

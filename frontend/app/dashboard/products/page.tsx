@@ -175,14 +175,19 @@ export default function ProductsPage() {
     try {
       const res = await authFetch(`/products/${id}`, { method: "DELETE" });
       if (!res.ok) {
-        setLoadError("No se pudo eliminar el producto.");
+        // Close the dialog first: otherwise the failure feedback renders behind
+        // the modal backdrop and the user sees nothing happen.
+        setDeleteTarget(null);
+        toast("No se pudo eliminar el producto.", "destructive");
         return;
       }
       setProducts((prev) => (prev ?? []).filter((p) => p.id !== id));
       setDeleteTarget(null);
       toast("Producto eliminado");
     } catch {
+      setDeleteTarget(null);
       setLoadError("No se pudo conectar con el servidor. Probá de nuevo.");
+      toast("No se pudo eliminar el producto.", "destructive");
     } finally {
       setDeleting(false);
     }
@@ -282,7 +287,7 @@ export default function ProductsPage() {
               <p className="text-sm text-muted-foreground">Todavía no tenés productos.</p>
             ) : null}
 
-            {products?.map((product) =>
+            {products?.map((product, index) =>
               editingId === product.id ? (
                 <div key={product.id} className="flex flex-col gap-2 rounded-md border p-3">
                   <Label htmlFor="edit-name">Nombre</Label>
@@ -337,7 +342,8 @@ export default function ProductsPage() {
               ) : (
                 <div
                   key={product.id}
-                  className="flex items-center justify-between gap-3 rounded-md border p-3"
+                  className="motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-bottom-2 motion-safe:duration-500 motion-safe:ease-[cubic-bezier(0.16,1,0.3,1)] motion-safe:fill-mode-backwards flex items-center justify-between gap-3 rounded-md border p-3"
+                  style={{ animationDelay: `${index * 60}ms` }}
                 >
                   <div className="flex flex-col">
                     <span className="font-medium">{product.name}</span>

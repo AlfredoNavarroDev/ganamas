@@ -88,6 +88,7 @@
   --glass-border: oklch(1 0 0 / 18%);
   --glass-blur: 20px;
   --glass-shadow: 0 8px 32px oklch(0 0 0 / 40%);
+  --glass-shadow-hover: 0 18px 48px oklch(0 0 0 / 55%);
 }
 
 /* Dark is the only supported mode for this pass; .dark mirrors :root so the
@@ -132,6 +133,7 @@
   --glass-border: oklch(1 0 0 / 18%);
   --glass-blur: 20px;
   --glass-shadow: 0 8px 32px oklch(0 0 0 / 40%);
+  --glass-shadow-hover: 0 18px 48px oklch(0 0 0 / 55%);
 }
 
 @keyframes ambient-drift-a {

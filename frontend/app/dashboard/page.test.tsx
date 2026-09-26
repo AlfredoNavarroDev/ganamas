@@ -4,6 +4,7 @@ import userEvent from "@testing-library/user-event";
 import DashboardPage from "./page";
 import { getToken, setToken } from "@/lib/auth";
 import { getActiveBusinessId } from "@/lib/business";
+import { ToastProvider } from "@/components/ui/toast";
 
 const push = vi.fn();
 const replace = vi.fn();
@@ -27,7 +28,7 @@ describe("DashboardPage", () => {
   });
 
   it("redirects to /login when there is no token", async () => {
-    render(<DashboardPage />);
+    render(<ToastProvider><DashboardPage /></ToastProvider>);
     await waitFor(() => expect(replace).toHaveBeenCalledWith("/login"));
     expect(screen.queryByText("Sesión iniciada")).not.toBeInTheDocument();
   });
@@ -35,7 +36,7 @@ describe("DashboardPage", () => {
   it("renders the welcome card when a token is present", async () => {
     setToken("token-123");
     vi.stubGlobal("fetch", vi.fn(async () => jsonResponse([])));
-    render(<DashboardPage />);
+    render(<ToastProvider><DashboardPage /></ToastProvider>);
     expect(await screen.findByText("Sesión iniciada")).toBeInTheDocument();
     expect(replace).not.toHaveBeenCalled();
   });
@@ -44,7 +45,7 @@ describe("DashboardPage", () => {
     setToken("token-123");
     vi.stubGlobal("fetch", vi.fn(async () => jsonResponse([])));
     const user = userEvent.setup();
-    render(<DashboardPage />);
+    render(<ToastProvider><DashboardPage /></ToastProvider>);
 
     await screen.findByText("Sesión iniciada");
     await user.click(screen.getByRole("button", { name: /cerrar sesión/i }));
@@ -56,7 +57,7 @@ describe("DashboardPage", () => {
   it("shows a create-business form when the user has no businesses", async () => {
     setToken("token-123");
     vi.stubGlobal("fetch", vi.fn(async () => jsonResponse([])));
-    render(<DashboardPage />);
+    render(<ToastProvider><DashboardPage /></ToastProvider>);
 
     expect(await screen.findByLabelText(/creá tu primer negocio/i)).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /crear negocio/i })).toBeInTheDocument();
@@ -71,7 +72,7 @@ describe("DashboardPage", () => {
       .mockResolvedValueOnce(jsonResponse(created));
     vi.stubGlobal("fetch", fetchMock);
     const user = userEvent.setup();
-    render(<DashboardPage />);
+    render(<ToastProvider><DashboardPage /></ToastProvider>);
 
     await screen.findByLabelText(/creá tu primer negocio/i);
     await user.type(screen.getByLabelText(/creá tu primer negocio/i), "Frutas");
@@ -81,6 +82,32 @@ describe("DashboardPage", () => {
     expect(await screen.findByRole("combobox", { name: /negocio activo/i })).toHaveValue("biz-1");
   });
 
+  it("shows a toast after creating a business", async () => {
+    setToken("token-123");
+    const created = { id: "biz-1", name: "Frutas", active: true };
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(jsonResponse([]))
+      .mockResolvedValueOnce(jsonResponse(created));
+    vi.stubGlobal("fetch", fetchMock);
+    const user = userEvent.setup();
+    render(<ToastProvider><DashboardPage /></ToastProvider>);
+
+    await screen.findByLabelText(/creá tu primer negocio/i);
+    await user.type(screen.getByLabelText(/creá tu primer negocio/i), "Frutas");
+    await user.click(screen.getByRole("button", { name: /crear negocio/i }));
+
+    expect(await screen.findByText("Negocio creado")).toBeInTheDocument();
+  });
+
+  it("shows a skeleton instead of the card while businesses are loading", () => {
+    setToken("token-123");
+    vi.stubGlobal("fetch", vi.fn(() => new Promise(() => {})));
+    render(<ToastProvider><DashboardPage /></ToastProvider>);
+
+    expect(screen.getByTestId("dashboard-skeleton")).toBeInTheDocument();
+  });
+
   it("auto-selects the first business when none is active yet", async () => {
     setToken("token-123");
     const businesses = [
@@ -88,7 +115,7 @@ describe("DashboardPage", () => {
       { id: "biz-2", name: "Verduras", active: true },
     ];
     vi.stubGlobal("fetch", vi.fn(async () => jsonResponse(businesses)));
-    render(<DashboardPage />);
+    render(<ToastProvider><DashboardPage /></ToastProvider>);
 
     const select = await screen.findByRole("combobox", { name: /negocio activo/i });
     expect(select).toHaveValue("biz-1");
@@ -103,7 +130,7 @@ describe("DashboardPage", () => {
     ];
     vi.stubGlobal("fetch", vi.fn(async () => jsonResponse(businesses)));
     const user = userEvent.setup();
-    render(<DashboardPage />);
+    render(<ToastProvider><DashboardPage /></ToastProvider>);
 
     const select = await screen.findByRole("combobox", { name: /negocio activo/i });
     await user.selectOptions(select, "biz-2");
@@ -114,7 +141,7 @@ describe("DashboardPage", () => {
   it("shows a link to the products page when a business is active", async () => {
     setToken("token-123");
     vi.stubGlobal("fetch", vi.fn(async () => jsonResponse([{ id: "biz-1", name: "Frutas", active: true }])));
-    render(<DashboardPage />);
+    render(<ToastProvider><DashboardPage /></ToastProvider>);
 
     const link = await screen.findByRole("button", { name: /productos/i });
     expect(link).toHaveAttribute("href", "/dashboard/products");
@@ -123,7 +150,7 @@ describe("DashboardPage", () => {
   it("shows a link to the sales page when a business is active", async () => {
     setToken("token-123");
     vi.stubGlobal("fetch", vi.fn(async () => jsonResponse([{ id: "biz-1", name: "Frutas", active: true }])));
-    render(<DashboardPage />);
+    render(<ToastProvider><DashboardPage /></ToastProvider>);
 
     const link = await screen.findByRole("button", { name: /^ventas$/i });
     expect(link).toHaveAttribute("href", "/dashboard/sales");
@@ -132,7 +159,7 @@ describe("DashboardPage", () => {
   it("shows an error alert when businesses fail to load", async () => {
     setToken("token-123");
     vi.stubGlobal("fetch", vi.fn(async () => { throw new Error("network down"); }));
-    render(<DashboardPage />);
+    render(<ToastProvider><DashboardPage /></ToastProvider>);
 
     expect(await screen.findByText(/no se pudo conectar con el servidor/i)).toBeInTheDocument();
   });

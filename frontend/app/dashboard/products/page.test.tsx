@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import ProductsPage from "./page";
+import { ToastProvider } from "@/components/ui/toast";
 import { setToken } from "@/lib/auth";
 import { setActiveBusinessId } from "@/lib/business";
 
@@ -19,7 +20,15 @@ function jsonResponse(data: unknown, status = 200) {
   });
 }
 
-const product = {
+function renderPage() {
+  return render(
+    <ToastProvider>
+      <ProductsPage />
+    </ToastProvider>
+  );
+}
+
+const sampleProduct = {
   id: "prod-1",
   name: "Palta hass",
   price: "5.00",
@@ -37,13 +46,13 @@ describe("ProductsPage", () => {
   });
 
   it("redirects to /login when there is no token", async () => {
-    render(<ProductsPage />);
+    renderPage();
     await waitFor(() => expect(replace).toHaveBeenCalledWith("/login"));
   });
 
   it("redirects to /dashboard when there is no active business", async () => {
     setToken("token-123");
-    render(<ProductsPage />);
+    renderPage();
     await waitFor(() => expect(replace).toHaveBeenCalledWith("/dashboard"));
   });
 
@@ -51,7 +60,7 @@ describe("ProductsPage", () => {
     setToken("token-123");
     setActiveBusinessId("biz-1");
     vi.stubGlobal("fetch", vi.fn(async () => jsonResponse([])));
-    render(<ProductsPage />);
+    renderPage();
 
     expect(await screen.findByText(/todavía no tenés productos/i)).toBeInTheDocument();
   });
@@ -59,8 +68,8 @@ describe("ProductsPage", () => {
   it("lists existing products", async () => {
     setToken("token-123");
     setActiveBusinessId("biz-1");
-    vi.stubGlobal("fetch", vi.fn(async () => jsonResponse([product])));
-    render(<ProductsPage />);
+    vi.stubGlobal("fetch", vi.fn(async () => jsonResponse([sampleProduct])));
+    renderPage();
 
     expect(await screen.findByText("Palta hass")).toBeInTheDocument();
     expect(screen.getByText(/5\.00/)).toBeInTheDocument();
@@ -72,10 +81,10 @@ describe("ProductsPage", () => {
     const fetchMock = vi
       .fn()
       .mockResolvedValueOnce(jsonResponse([]))
-      .mockResolvedValueOnce(jsonResponse(product));
+      .mockResolvedValueOnce(jsonResponse(sampleProduct));
     vi.stubGlobal("fetch", fetchMock);
     const user = userEvent.setup();
-    render(<ProductsPage />);
+    renderPage();
 
     await screen.findByText(/todavía no tenés productos/i);
     await user.type(screen.getByLabelText(/^nombre$/i), "Palta hass");
@@ -88,14 +97,14 @@ describe("ProductsPage", () => {
   it("edits a product", async () => {
     setToken("token-123");
     setActiveBusinessId("biz-1");
-    const updated = { ...product, price: "6.00" };
+    const updated = { ...sampleProduct, price: "6.00" };
     const fetchMock = vi
       .fn()
-      .mockResolvedValueOnce(jsonResponse([product]))
+      .mockResolvedValueOnce(jsonResponse([sampleProduct]))
       .mockResolvedValueOnce(jsonResponse(updated));
     vi.stubGlobal("fetch", fetchMock);
     const user = userEvent.setup();
-    render(<ProductsPage />);
+    renderPage();
 
     await screen.findByText("Palta hass");
     await user.click(screen.getByRole("button", { name: /editar/i }));
@@ -108,23 +117,6 @@ describe("ProductsPage", () => {
     expect(await screen.findByText(/6\.00/)).toBeInTheDocument();
   });
 
-  it("deletes a product", async () => {
-    setToken("token-123");
-    setActiveBusinessId("biz-1");
-    const fetchMock = vi
-      .fn()
-      .mockResolvedValueOnce(jsonResponse([product]))
-      .mockResolvedValueOnce(jsonResponse({}));
-    vi.stubGlobal("fetch", fetchMock);
-    const user = userEvent.setup();
-    render(<ProductsPage />);
-
-    await screen.findByText("Palta hass");
-    await user.click(screen.getByRole("button", { name: /eliminar/i }));
-
-    await waitFor(() => expect(screen.queryByText("Palta hass")).not.toBeInTheDocument());
-  });
-
   it("shows an error alert when products fail to load", async () => {
     setToken("token-123");
     setActiveBusinessId("biz-1");
@@ -134,8 +126,94 @@ describe("ProductsPage", () => {
         throw new Error("network down");
       }),
     );
-    render(<ProductsPage />);
+    renderPage();
 
     expect(await screen.findByText(/no se pudo conectar con el servidor/i)).toBeInTheDocument();
+  });
+});
+
+const product = {
+  id: "prod-1",
+  name: "Arroz 1kg",
+  price: "4.50",
+  unit: "kg" as const,
+  category: null,
+  stock: "24",
+  active: true,
+};
+
+describe("ProductsPage delete flow", () => {
+  beforeEach(() => {
+    localStorage.clear();
+    push.mockClear();
+    replace.mockClear();
+    setToken("token-123");
+    setActiveBusinessId("biz-1");
+  });
+
+  it("shows a confirmation dialog instead of deleting immediately", async () => {
+    vi.stubGlobal("fetch", vi.fn(async () => jsonResponse([product])));
+    const user = userEvent.setup();
+    renderPage();
+
+    await user.click(await screen.findByRole("button", { name: "Eliminar" }));
+
+    expect(screen.getByText('¿Eliminar "Arroz 1kg"?')).toBeInTheDocument();
+  });
+
+  it("does not delete when Cancelar is clicked", async () => {
+    vi.stubGlobal("fetch", vi.fn(async () => jsonResponse([product])));
+    const user = userEvent.setup();
+    renderPage();
+
+    await user.click(await screen.findByRole("button", { name: "Eliminar" }));
+    await user.click(screen.getByRole("button", { name: "Cancelar" }));
+
+    expect(screen.queryByText('¿Eliminar "Arroz 1kg"?')).not.toBeInTheDocument();
+    expect(screen.getByText("Arroz 1kg")).toBeInTheDocument();
+  });
+
+  it("deletes and shows a toast when confirmed", async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(jsonResponse([product]))
+      .mockResolvedValueOnce(new Response(null, { status: 204 }));
+    vi.stubGlobal("fetch", fetchMock);
+    const user = userEvent.setup();
+    renderPage();
+
+    await user.click(await screen.findByRole("button", { name: "Eliminar" }));
+    await user.click(screen.getByRole("button", { name: "Eliminar producto" }));
+
+    await waitFor(() => expect(screen.queryByText("Arroz 1kg")).not.toBeInTheDocument());
+    expect(await screen.findByText("Producto eliminado")).toBeInTheDocument();
+  });
+
+  it("closes the dialog and warns with a toast when the delete request fails", async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(jsonResponse([product]))
+      .mockResolvedValueOnce(jsonResponse({ message: "boom" }, 500));
+    vi.stubGlobal("fetch", fetchMock);
+    const user = userEvent.setup();
+    renderPage();
+
+    await user.click(await screen.findByRole("button", { name: "Eliminar" }));
+    await user.click(screen.getByRole("button", { name: "Eliminar producto" }));
+
+    expect(
+      await screen.findByText("No se pudo eliminar el producto."),
+    ).toBeInTheDocument();
+    await waitFor(() =>
+      expect(screen.queryByText('¿Eliminar "Arroz 1kg"?')).not.toBeInTheDocument(),
+    );
+    expect(screen.getByText("Arroz 1kg")).toBeInTheDocument();
+  });
+
+  it("shows a skeleton while products are loading", () => {
+    vi.stubGlobal("fetch", vi.fn(() => new Promise(() => {})));
+    renderPage();
+
+    expect(screen.getByTestId("products-skeleton")).toBeInTheDocument();
   });
 });

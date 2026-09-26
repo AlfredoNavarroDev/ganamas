@@ -9,6 +9,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Skeleton } from "@/components/ui/skeleton";
+import { useToast } from "@/components/ui/toast";
 import { clearToken, getToken } from "@/lib/auth";
 import { getActiveBusinessId, setActiveBusinessId } from "@/lib/business";
 import { authFetch } from "@/lib/api";
@@ -26,6 +28,8 @@ export default function DashboardPage() {
   const [newBusinessName, setNewBusinessName] = useState("");
   const [creating, setCreating] = useState(false);
   const [createError, setCreateError] = useState<string | null>(null);
+
+  const { toast } = useToast();
 
   useEffect(() => {
     if (!getToken()) {
@@ -81,6 +85,7 @@ export default function DashboardPage() {
       setActiveBusinessId(business.id);
       setActiveId(business.id);
       setNewBusinessName("");
+      toast("Negocio creado");
     } catch {
       setCreateError("No se pudo conectar con el servidor. Probá de nuevo.");
     } finally {
@@ -101,8 +106,16 @@ export default function DashboardPage() {
 
   if (!checked) return null;
 
+  if (businesses === null && !loadError) {
+    return (
+      <main className="flex min-h-dvh flex-1 flex-col items-center justify-center px-6 py-16">
+        <Skeleton data-testid="dashboard-skeleton" className="h-56 w-full max-w-sm" />
+      </main>
+    );
+  }
+
   return (
-    <main className="flex min-h-dvh flex-1 flex-col items-center justify-center bg-background px-6 py-16">
+    <main className="flex min-h-dvh flex-1 flex-col items-center justify-center px-6 py-16">
       <Card className="w-full max-w-sm">
         <CardHeader>
           <CardTitle className="text-lg">Sesión iniciada</CardTitle>

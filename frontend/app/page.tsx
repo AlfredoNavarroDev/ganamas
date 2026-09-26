@@ -23,11 +23,11 @@ const features = [
 
 export default function Home() {
   return (
-    <main className="flex min-h-dvh flex-1 flex-col items-center justify-center bg-background px-6 py-16">
+    <main className="flex min-h-dvh flex-1 flex-col items-center justify-center px-6 py-16">
       <div className="flex w-full max-w-md flex-col items-center text-center">
         <Badge
           variant="outline"
-          className="motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-bottom-2 motion-safe:duration-500 border-emerald-600/30 text-emerald-700 dark:text-emerald-400"
+          className="motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-bottom-2 motion-safe:duration-500"
         >
           Registro de ventas y compras
         </Badge>
@@ -64,7 +64,7 @@ export default function Home() {
             className="motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-bottom-2 motion-safe:duration-500 motion-safe:fill-mode-backwards flex items-start gap-3 text-left"
             style={{ animationDelay: `${300 + i * 75}ms` }}
           >
-            <span className="mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-full bg-emerald-600/10 text-emerald-700 dark:text-emerald-400">
+            <span className="mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-full bg-primary/15 text-primary">
               <Icon className="size-4" />
             </span>
             <div>

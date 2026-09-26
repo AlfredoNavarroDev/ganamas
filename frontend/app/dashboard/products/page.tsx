@@ -8,6 +8,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { Skeleton } from "@/components/ui/skeleton";
+import { useToast } from "@/components/ui/toast";
 import { getToken } from "@/lib/auth";
 import { getActiveBusinessId } from "@/lib/business";
 import { authFetch } from "@/lib/api";
@@ -47,6 +50,10 @@ export default function ProductsPage() {
   const [editValues, setEditValues] = useState<ProductFormValues>(emptyForm);
   const [savingEdit, setSavingEdit] = useState(false);
   const [editError, setEditError] = useState<string | null>(null);
+
+  const [deleteTarget, setDeleteTarget] = useState<Product | null>(null);
+  const [deleting, setDeleting] = useState(false);
+  const { toast } = useToast();
 
   useEffect(() => {
     if (!getToken()) {
@@ -109,6 +116,7 @@ export default function ProductsPage() {
       const created = (await res.json()) as Product;
       setProducts((prev) => [...(prev ?? []), created]);
       setNewProduct(emptyForm);
+      toast("Producto creado");
     } catch {
       setCreateError("No se pudo conectar con el servidor. Probá de nuevo.");
     } finally {
@@ -163,22 +171,43 @@ export default function ProductsPage() {
 
   async function handleDelete(id: string) {
     setLoadError(null);
+    setDeleting(true);
     try {
       const res = await authFetch(`/products/${id}`, { method: "DELETE" });
       if (!res.ok) {
-        setLoadError("No se pudo eliminar el producto.");
+        // Close the dialog first: otherwise the failure feedback renders behind
+        // the modal backdrop and the user sees nothing happen.
+        setDeleteTarget(null);
+        toast("No se pudo eliminar el producto.", "destructive");
         return;
       }
       setProducts((prev) => (prev ?? []).filter((p) => p.id !== id));
+      setDeleteTarget(null);
+      toast("Producto eliminado");
     } catch {
+      setDeleteTarget(null);
       setLoadError("No se pudo conectar con el servidor. Probá de nuevo.");
+      toast("No se pudo eliminar el producto.", "destructive");
+    } finally {
+      setDeleting(false);
     }
   }
 
   if (!checked) return null;
 
+  if (products === null && !loadError) {
+    return (
+      <main className="flex min-h-dvh flex-1 flex-col items-center px-6 py-16">
+        <div className="flex w-full max-w-2xl flex-col gap-6">
+          <Skeleton data-testid="products-skeleton" className="h-48 w-full" />
+          <Skeleton className="h-64 w-full" />
+        </div>
+      </main>
+    );
+  }
+
   return (
-    <main className="flex min-h-dvh flex-1 flex-col items-center bg-background px-6 py-16">
+    <main className="flex min-h-dvh flex-1 flex-col items-center px-6 py-16">
       <div className="flex w-full max-w-2xl flex-col gap-6">
         <Link href="/dashboard" className="text-sm text-muted-foreground hover:text-foreground">
           ← Volver
@@ -258,7 +287,7 @@ export default function ProductsPage() {
               <p className="text-sm text-muted-foreground">Todavía no tenés productos.</p>
             ) : null}
 
-            {products?.map((product) =>
+            {products?.map((product, index) =>
               editingId === product.id ? (
                 <div key={product.id} className="flex flex-col gap-2 rounded-md border p-3">
                   <Label htmlFor="edit-name">Nombre</Label>
@@ -313,7 +342,8 @@ export default function ProductsPage() {
               ) : (
                 <div
                   key={product.id}
-                  className="flex items-center justify-between gap-3 rounded-md border p-3"
+                  className="motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-bottom-2 motion-safe:duration-500 motion-safe:ease-[cubic-bezier(0.16,1,0.3,1)] motion-safe:fill-mode-backwards flex items-center justify-between gap-3 rounded-md border p-3"
+                  style={{ animationDelay: `${index * 60}ms` }}
                 >
                   <div className="flex flex-col">
                     <span className="font-medium">{product.name}</span>
@@ -329,7 +359,7 @@ export default function ProductsPage() {
                     <Button
                       type="button"
                       variant="outline"
-                      onClick={() => handleDelete(product.id)}
+                      onClick={() => setDeleteTarget(product)}
                     >
                       Eliminar
                     </Button>
@@ -340,6 +370,18 @@ export default function ProductsPage() {
           </CardContent>
         </Card>
       </div>
+
+      <ConfirmDialog
+        open={deleteTarget !== null}
+        onOpenChange={(open) => {
+          if (!open) setDeleteTarget(null);
+        }}
+        title={deleteTarget ? `¿Eliminar "${deleteTarget.name}"?` : ""}
+        description="Esta acción no se puede deshacer. El producto se quitará del inventario activo."
+        confirmLabel="Eliminar producto"
+        confirming={deleting}
+        onConfirm={() => deleteTarget && handleDelete(deleteTarget.id)}
+      />
     </main>
   );
 }

@@ -197,7 +197,7 @@ export default function ProductsPage() {
 
   if (products === null && !loadError) {
     return (
-      <main className="flex min-h-dvh flex-1 flex-col items-center px-6 py-16">
+      <main className="motion-safe:animate-in motion-safe:fade-in motion-safe:duration-500 flex min-h-dvh flex-1 flex-col items-center px-6 py-16">
         <div className="flex w-full max-w-2xl flex-col gap-6">
           <Skeleton data-testid="products-skeleton" className="h-48 w-full" />
           <Skeleton className="h-64 w-full" />
@@ -207,7 +207,7 @@ export default function ProductsPage() {
   }
 
   return (
-    <main className="flex min-h-dvh flex-1 flex-col items-center px-6 py-16">
+    <main className="motion-safe:animate-in motion-safe:fade-in motion-safe:duration-500 flex min-h-dvh flex-1 flex-col items-center px-6 py-16">
       <div className="flex w-full max-w-2xl flex-col gap-6">
         <Link href="/dashboard" className="text-sm text-muted-foreground hover:text-foreground">
           ← Volver

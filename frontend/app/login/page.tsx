@@ -58,7 +58,7 @@ export default function LoginPage() {
   }
 
   return (
-    <main className="flex min-h-dvh flex-1 flex-col items-center justify-center px-6 py-16">
+    <main className="motion-safe:animate-in motion-safe:fade-in motion-safe:duration-500 flex min-h-dvh flex-1 flex-col items-center justify-center px-6 py-16">
       <div className="w-full max-w-sm">
         <Link
           href="/"

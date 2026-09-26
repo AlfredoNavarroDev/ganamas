@@ -108,14 +108,14 @@ export default function DashboardPage() {
 
   if (businesses === null && !loadError) {
     return (
-      <main className="flex min-h-dvh flex-1 flex-col items-center justify-center px-6 py-16">
+      <main className="motion-safe:animate-in motion-safe:fade-in motion-safe:duration-500 flex min-h-dvh flex-1 flex-col items-center justify-center px-6 py-16">
         <Skeleton data-testid="dashboard-skeleton" className="h-56 w-full max-w-sm" />
       </main>
     );
   }
 
   return (
-    <main className="flex min-h-dvh flex-1 flex-col items-center justify-center px-6 py-16">
+    <main className="motion-safe:animate-in motion-safe:fade-in motion-safe:duration-500 flex min-h-dvh flex-1 flex-col items-center justify-center px-6 py-16">
       <Card className="w-full max-w-sm">
         <CardHeader>
           <CardTitle className="text-lg">Sesión iniciada</CardTitle>

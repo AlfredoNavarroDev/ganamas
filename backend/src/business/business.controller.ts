@@ -1,4 +1,12 @@
-import { Body, Controller, Get, Param, Patch, Post, Query } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Param,
+  Patch,
+  Post,
+  Query,
+} from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { BusinessService } from './business.service';
 import { CreateBusinessDto } from './dto/create-business.dto';
@@ -13,12 +21,18 @@ export class BusinessController {
   constructor(private readonly businessService: BusinessService) {}
 
   @Post()
-  create(@CurrentUser() user: AuthenticatedUser, @Body() dto: CreateBusinessDto) {
+  create(
+    @CurrentUser() user: AuthenticatedUser,
+    @Body() dto: CreateBusinessDto,
+  ) {
     return this.businessService.create(user.userId, dto);
   }
 
   @Get()
-  findAll(@CurrentUser() user: AuthenticatedUser, @Query('active') active?: string) {
+  findAll(
+    @CurrentUser() user: AuthenticatedUser,
+    @Query('active') active?: string,
+  ) {
     const activeFilter = active === undefined ? true : active === 'true';
     return this.businessService.findAll(user.userId, activeFilter);
   }

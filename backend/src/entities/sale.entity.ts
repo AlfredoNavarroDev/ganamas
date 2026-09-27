@@ -29,7 +29,13 @@ export class Sale {
   quantity: string;
 
   // snapshot del precio de catálogo al momento de vender (para calcular descuento/regateo)
-  @Column({ name: 'list_price', type: 'numeric', precision: 10, scale: 2, default: 0 })
+  @Column({
+    name: 'list_price',
+    type: 'numeric',
+    precision: 10,
+    scale: 2,
+    default: 0,
+  })
   listPrice: string;
 
   // precio realmente cobrado (puede ser menor a list_price si hubo regateo)
@@ -37,7 +43,13 @@ export class Sale {
   unitPrice: string;
 
   // snapshot del avg_cost del producto al momento de vender
-  @Column({ name: 'unit_cost', type: 'numeric', precision: 10, scale: 2, default: 0 })
+  @Column({
+    name: 'unit_cost',
+    type: 'numeric',
+    precision: 10,
+    scale: 2,
+    default: 0,
+  })
   unitCost: string;
 
   // columnas generadas en la DB — TypeORM solo las lee

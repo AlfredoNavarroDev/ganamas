@@ -7,7 +7,10 @@ export const TEST_PASSWORD = 'e2e-test-password';
 export async function ensureTestUser(): Promise<void> {
   const client = new Client({
     connectionString: process.env.DATABASE_URL,
-    ssl: process.env.DATABASE_SSL === 'true' ? { rejectUnauthorized: false } : false,
+    ssl:
+      process.env.DATABASE_SSL === 'true'
+        ? { rejectUnauthorized: false }
+        : false,
   });
   await client.connect();
   try {

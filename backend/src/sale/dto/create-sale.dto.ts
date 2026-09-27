@@ -20,12 +20,20 @@ export class CreateSaleDto {
   @IsNumberString()
   quantity: string;
 
-  @ApiProperty({ example: '4.50', required: false, description: 'Omit to use the catalog price' })
+  @ApiProperty({
+    example: '4.50',
+    required: false,
+    description: 'Omit to use the catalog price',
+  })
   @IsOptional()
   @IsNumberString()
   unitPrice?: string;
 
-  @ApiProperty({ enum: ['efectivo', 'yape', 'plin'], example: 'efectivo', required: false })
+  @ApiProperty({
+    enum: ['efectivo', 'yape', 'plin'],
+    example: 'efectivo',
+    required: false,
+  })
   @IsOptional()
   @IsIn(['efectivo', 'yape', 'plin'])
   paymentMethod?: 'efectivo' | 'yape' | 'plin';

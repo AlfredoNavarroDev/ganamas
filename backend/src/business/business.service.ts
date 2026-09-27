@@ -9,7 +9,8 @@ import { UpdateBusinessDto } from './dto/update-business.dto';
 @Injectable()
 export class BusinessService {
   constructor(
-    @InjectRepository(Business) private readonly businessRepository: Repository<Business>,
+    @InjectRepository(Business)
+    private readonly businessRepository: Repository<Business>,
   ) {}
 
   create(ownerId: string, dto: CreateBusinessDto) {
@@ -21,7 +22,9 @@ export class BusinessService {
   }
 
   findAll(ownerId: string, active: boolean) {
-    return this.businessRepository.find({ where: { owner: { id: ownerId }, active } });
+    return this.businessRepository.find({
+      where: { owner: { id: ownerId }, active },
+    });
   }
 
   async update(ownerId: string, id: string, dto: UpdateBusinessDto) {

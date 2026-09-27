@@ -11,7 +11,11 @@ export class ReportsController {
 
   @Get('weekly-summary')
   weeklySummary(@Query() query: ReportsQueryDto) {
-    return this.reportsService.weeklySummary(query.businessId, query.from, query.to);
+    return this.reportsService.weeklySummary(
+      query.businessId,
+      query.from,
+      query.to,
+    );
   }
 
   @Get('kpis')

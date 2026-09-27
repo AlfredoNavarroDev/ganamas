@@ -44,6 +44,7 @@ const sale = {
   quantity: "2.00",
   unitPrice: "5.00",
   listPrice: "5.00",
+  discount: "0.00",
   total: "10.00",
   profit: "4.00",
   paymentMethod: "efectivo",
@@ -96,6 +97,27 @@ describe("SalesPage", () => {
 
     expect(
       await screen.findByText(/2\.00 kg × 5\.00 = 10\.00 · efectivo · 02:00 p\. m\./),
+    ).toBeInTheDocument();
+  });
+
+  it("shows the catalog price as a hint so the seller knows they can haggle it down", async () => {
+    setToken("token-123");
+    setActiveBusinessId("biz-1");
+    stubLoad([product], []);
+    renderPage();
+
+    expect(await screen.findByText(/precio de lista: S\/ 5\.00/i)).toBeInTheDocument();
+  });
+
+  it("shows the haggled discount next to a sale sold below the catalog price", async () => {
+    setToken("token-123");
+    setActiveBusinessId("biz-1");
+    const haggledSale = { ...sale, unitPrice: "4.50", total: "9.00", discount: "1.00" };
+    stubLoad([product], [haggledSale]);
+    renderPage();
+
+    expect(
+      await screen.findByText(/regateo: -S\/ 1\.00 \(precio de lista S\/ 5\.00\)/i),
     ).toBeInTheDocument();
   });
 

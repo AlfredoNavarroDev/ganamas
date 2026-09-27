@@ -30,7 +30,9 @@ type Sale = {
   id: string;
   product: { id: string; name: string; unit: "unidad" | "kg" };
   quantity: string;
+  listPrice: string;
   unitPrice: string;
+  discount: string;
   total: string;
   paymentMethod: "efectivo" | "yape" | "plin";
   soldAt: string;
@@ -44,6 +46,10 @@ function formatLimaTime(iso: string): string {
     hour: "2-digit",
     minute: "2-digit",
   }).format(new Date(iso));
+}
+
+function soles(amount: string): string {
+  return `S/ ${amount}`;
 }
 
 export default function SalesPage() {
@@ -65,6 +71,8 @@ export default function SalesPage() {
   const [deleteTarget, setDeleteTarget] = useState<Sale | null>(null);
   const [deleting, setDeleting] = useState(false);
   const { toast } = useToast();
+
+  const selectedProduct = products?.find((p) => p.id === productId) ?? null;
 
   useEffect(() => {
     if (!getToken()) {
@@ -264,6 +272,12 @@ export default function SalesPage() {
                     value={unitPrice}
                     onChange={(e) => setUnitPrice(e.target.value)}
                   />
+                  {selectedProduct ? (
+                    <p className="text-xs text-muted-foreground">
+                      Precio de lista: {soles(selectedProduct.price)}. Si el cliente regateó,
+                      cambiá este precio por el que realmente cobraste.
+                    </p>
+                  ) : null}
                 </div>
                 <div className="flex flex-col gap-2">
                   <Label htmlFor="payment-method">Método de pago</Label>
@@ -317,6 +331,11 @@ export default function SalesPage() {
                     {sale.quantity} {sale.product.unit} × {sale.unitPrice} = {sale.total} ·{" "}
                     {sale.paymentMethod} · {formatLimaTime(sale.soldAt)}
                   </span>
+                  {Number(sale.discount) > 0 ? (
+                    <span className="text-xs text-muted-foreground">
+                      Regateo: -{soles(sale.discount)} (precio de lista {soles(sale.listPrice)})
+                    </span>
+                  ) : null}
                 </div>
                 <Button type="button" variant="outline" onClick={() => setDeleteTarget(sale)}>
                   Eliminar

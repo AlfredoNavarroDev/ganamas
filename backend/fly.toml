@@ -1,32 +1,34 @@
-# Config Fly.io. Deploy con: fly launch --no-deploy (primera vez, desde backend/)
-# despues fly deploy. App name debe ser unico global, cambia "ganamas-backend"
-# si esta tomado.
-app = "ganamas-backend"
-primary_region = "gru"
+# fly.toml app configuration file generated for ganamas-backend on 2026-09-27T00:48:36-05:00
+#
+# See https://fly.io/docs/reference/configuration/ for information about how to use this file.
+#
+
+app = 'ganamas-backend'
+primary_region = 'gru'
 
 [build]
-  dockerfile = "Dockerfile"
+  dockerfile = 'Dockerfile'
 
 [env]
-  NODE_ENV = "production"
-  DATABASE_SSL = "true"
-  JWT_EXPIRES_IN = "30d"
-  LOW_STOCK_THRESHOLD = "5"
+  DATABASE_SSL = 'true'
+  JWT_EXPIRES_IN = '30d'
+  LOW_STOCK_THRESHOLD = '5'
+  NODE_ENV = 'production'
 
 [http_service]
   internal_port = 3000
   force_https = true
-  auto_stop_machines = false
+  auto_stop_machines = 'off'
   auto_start_machines = true
   min_machines_running = 1
 
-[[http_service.checks]]
-  interval = "15s"
-  timeout = "5s"
-  grace_period = "10s"
-  method = "GET"
-  path = "/health"
+  [[http_service.checks]]
+    interval = '15s'
+    timeout = '5s'
+    grace_period = '10s'
+    method = 'GET'
+    path = '/health'
 
 [[vm]]
-  size = "shared-cpu-1x"
-  memory = "256mb"
+  size = 'shared-cpu-1x'
+  memory = '512mb'

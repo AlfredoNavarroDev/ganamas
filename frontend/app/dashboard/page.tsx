@@ -183,6 +183,13 @@ export default function DashboardPage() {
               >
                 Ventas
               </Button>
+              <Button
+                variant="outline"
+                nativeButton={false}
+                render={<Link href="/dashboard/kpis" />}
+              >
+                KPIs
+              </Button>
             </div>
           ) : null}
 

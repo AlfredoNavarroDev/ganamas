@@ -64,7 +64,7 @@ export default function SalesPage() {
 
   const [productId, setProductId] = useState("");
   const [quantity, setQuantity] = useState("");
-  const [unitPrice, setUnitPrice] = useState("");
+  const [discount, setDiscount] = useState("");
   const [paymentMethod, setPaymentMethod] = useState<Sale["paymentMethod"]>("efectivo");
   const [creating, setCreating] = useState(false);
   const [createError, setCreateError] = useState<string | null>(null);
@@ -74,6 +74,12 @@ export default function SalesPage() {
   const { toast } = useToast();
 
   const selectedProduct = products?.find((p) => p.id === productId) ?? null;
+  const catalogPrice = selectedProduct ? Number(selectedProduct.price) : 0;
+  const parsedQuantity = Number(quantity) || 0;
+  const fullTotal = catalogPrice * parsedQuantity;
+  const discountAmount = Number(discount) || 0;
+  const totalToCharge = Math.max(fullTotal - discountAmount, 0);
+  const computedUnitPrice = parsedQuantity > 0 ? (totalToCharge / parsedQuantity).toFixed(2) : "0.00";
 
   useEffect(() => {
     if (!getToken()) {
@@ -102,7 +108,6 @@ export default function SalesPage() {
       setProducts(data);
       if (data.length > 0) {
         setProductId((prev) => prev || data[0].id);
-        setUnitPrice((prev) => prev || data[0].price);
       }
     } catch {
       setLoadError("No se pudo conectar con el servidor. Probá de nuevo.");
@@ -127,12 +132,6 @@ export default function SalesPage() {
     }
   }
 
-  function handleProductChange(id: string) {
-    setProductId(id);
-    const product = products?.find((p) => p.id === id);
-    if (product) setUnitPrice(product.price);
-  }
-
   async function handleCreateSale(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (!businessId || !productId) return;
@@ -147,7 +146,7 @@ export default function SalesPage() {
           businessId,
           productId,
           quantity,
-          unitPrice,
+          unitPrice: computedUnitPrice,
           paymentMethod,
         }),
       });
@@ -163,6 +162,7 @@ export default function SalesPage() {
       const created = (await res.json()) as Sale;
       setSales((prev) => [created, ...(prev ?? [])]);
       setQuantity("");
+      setDiscount("");
       toast("Venta registrada");
       loadProducts(businessId);
     } catch {
@@ -236,7 +236,7 @@ export default function SalesPage() {
               <form onSubmit={handleCreateSale} className="flex flex-col gap-3">
                 <div className="flex flex-col gap-2">
                   <Label htmlFor="product">Producto</Label>
-                  <Select value={productId} onValueChange={(value) => handleProductChange(value as string)}>
+                  <Select value={productId} onValueChange={(value) => setProductId(value as string)}>
                     <SelectTrigger id="product">
                       <SelectValue>
                         {(value: string) => {
@@ -265,18 +265,19 @@ export default function SalesPage() {
                   />
                 </div>
                 <div className="flex flex-col gap-2">
-                  <Label htmlFor="unit-price">Precio de venta (con descuento si regateó)</Label>
+                  <Label htmlFor="discount">Descuento (S/)</Label>
                   <Input
-                    id="unit-price"
-                    required
+                    id="discount"
                     inputMode="decimal"
-                    value={unitPrice}
-                    onChange={(e) => setUnitPrice(e.target.value)}
+                    placeholder="0.00"
+                    value={discount}
+                    onChange={(e) => setDiscount(e.target.value)}
                   />
                   {selectedProduct ? (
                     <p className="text-xs text-muted-foreground">
-                      Precio de lista: {soles(selectedProduct.price)}. Si le hiciste un descuento
-                      al cliente, bajá este precio al monto que realmente cobraste.
+                      Precio de lista: {soles(selectedProduct.price)} × {quantity || 0} ={" "}
+                      {soles(fullTotal.toFixed(2))}. Poné acá cuánto le rebajaste al cliente en
+                      total, si hubo regateo. Total a cobrar: {soles(totalToCharge.toFixed(2))}.
                     </p>
                   ) : null}
                 </div>

@@ -127,17 +127,35 @@ describe("SalesPage", () => {
     renderPage();
 
     await screen.findByText("Palta hass");
-    expect(screen.queryByText(/regateo/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/^Regateo -/)).not.toBeInTheDocument();
   });
 
-  it("prefills the unit price with the selected product's catalog price", async () => {
+  it("computes the total to charge from quantity and defaults the discount to zero", async () => {
     setToken("token-123");
     setActiveBusinessId("biz-1");
     stubLoad([product], []);
+    const user = userEvent.setup();
     renderPage();
 
-    const priceInput = await screen.findByLabelText(/precio de venta/i);
-    await waitFor(() => expect(priceInput).toHaveValue("5.00"));
+    await user.type(await screen.findByLabelText(/^cantidad$/i), "2");
+
+    expect(
+      await screen.findByText(/precio de lista: S\/ 5\.00 × 2 = S\/ 10\.00/i),
+    ).toBeInTheDocument();
+    expect(await screen.findByText(/total a cobrar: S\/ 10\.00/i)).toBeInTheDocument();
+  });
+
+  it("subtracts the entered discount from the total to charge", async () => {
+    setToken("token-123");
+    setActiveBusinessId("biz-1");
+    stubLoad([product], []);
+    const user = userEvent.setup();
+    renderPage();
+
+    await user.type(await screen.findByLabelText(/^cantidad$/i), "2");
+    await user.type(screen.getByLabelText(/descuento/i), "1");
+
+    expect(await screen.findByText(/total a cobrar: S\/ 9\.00/i)).toBeInTheDocument();
   });
 
   it("registers a sale", async () => {
@@ -153,7 +171,7 @@ describe("SalesPage", () => {
     const user = userEvent.setup();
     renderPage();
 
-    await screen.findByLabelText(/precio de venta/i);
+    await screen.findByLabelText(/descuento/i);
     await user.type(screen.getByLabelText(/^cantidad$/i), "2");
     await user.click(screen.getByRole("button", { name: /registrar venta/i }));
 
@@ -177,7 +195,7 @@ describe("SalesPage", () => {
     const user = userEvent.setup();
     renderPage();
 
-    await screen.findByLabelText(/precio de venta/i);
+    await screen.findByLabelText(/descuento/i);
     await user.type(screen.getByLabelText(/^cantidad$/i), "999");
     await user.click(screen.getByRole("button", { name: /registrar venta/i }));
 

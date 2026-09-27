@@ -136,7 +136,7 @@ describe("SalesPage", () => {
     stubLoad([product], []);
     renderPage();
 
-    const priceInput = await screen.findByLabelText(/precio unitario/i);
+    const priceInput = await screen.findByLabelText(/precio de venta/i);
     await waitFor(() => expect(priceInput).toHaveValue("5.00"));
   });
 
@@ -153,7 +153,7 @@ describe("SalesPage", () => {
     const user = userEvent.setup();
     renderPage();
 
-    await screen.findByLabelText(/precio unitario/i);
+    await screen.findByLabelText(/precio de venta/i);
     await user.type(screen.getByLabelText(/^cantidad$/i), "2");
     await user.click(screen.getByRole("button", { name: /registrar venta/i }));
 
@@ -177,7 +177,7 @@ describe("SalesPage", () => {
     const user = userEvent.setup();
     renderPage();
 
-    await screen.findByLabelText(/precio unitario/i);
+    await screen.findByLabelText(/precio de venta/i);
     await user.type(screen.getByLabelText(/^cantidad$/i), "999");
     await user.click(screen.getByRole("button", { name: /registrar venta/i }));
 

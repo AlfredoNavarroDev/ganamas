@@ -265,7 +265,7 @@ export default function SalesPage() {
                   />
                 </div>
                 <div className="flex flex-col gap-2">
-                  <Label htmlFor="unit-price">Precio unitario</Label>
+                  <Label htmlFor="unit-price">Precio de venta (con descuento si regateó)</Label>
                   <Input
                     id="unit-price"
                     required
@@ -275,8 +275,8 @@ export default function SalesPage() {
                   />
                   {selectedProduct ? (
                     <p className="text-xs text-muted-foreground">
-                      Precio de lista: {soles(selectedProduct.price)}. Si el cliente regateó,
-                      cambiá este precio por el que realmente cobraste.
+                      Precio de lista: {soles(selectedProduct.price)}. Si le hiciste un descuento
+                      al cliente, bajá este precio al monto que realmente cobraste.
                     </p>
                   ) : null}
                 </div>

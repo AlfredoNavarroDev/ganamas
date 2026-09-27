@@ -15,6 +15,7 @@ import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@
 import { getToken } from "@/lib/auth";
 import { getActiveBusinessId } from "@/lib/business";
 import { authFetch } from "@/lib/api";
+import { limaTodayRange } from "@/lib/date-ranges";
 
 type Product = {
   id: string;
@@ -36,6 +37,14 @@ type Sale = {
 };
 
 const PAYMENT_METHODS: Sale["paymentMethod"][] = ["efectivo", "yape", "plin"];
+
+function formatLimaTime(iso: string): string {
+  return new Intl.DateTimeFormat("es-PE", {
+    timeZone: "America/Lima",
+    hour: "2-digit",
+    minute: "2-digit",
+  }).format(new Date(iso));
+}
 
 export default function SalesPage() {
   const router = useRouter();
@@ -94,7 +103,10 @@ export default function SalesPage() {
   async function loadSales(activeBusinessId: string) {
     setLoadError(null);
     try {
-      const res = await authFetch(`/sales?businessId=${activeBusinessId}`);
+      const { from, to } = limaTodayRange();
+      const res = await authFetch(
+        `/sales?businessId=${activeBusinessId}&from=${from}&to=${to}`,
+      );
       if (!res.ok) {
         setLoadError("No se pudieron cargar tus ventas.");
         return;
@@ -303,7 +315,7 @@ export default function SalesPage() {
                   <span className="font-medium">{sale.product.name}</span>
                   <span className="text-sm text-muted-foreground">
                     {sale.quantity} {sale.product.unit} × {sale.unitPrice} = {sale.total} ·{" "}
-                    {sale.paymentMethod}
+                    {sale.paymentMethod} · {formatLimaTime(sale.soldAt)}
                   </span>
                 </div>
                 <Button type="button" variant="outline" onClick={() => setDeleteTarget(sale)}>

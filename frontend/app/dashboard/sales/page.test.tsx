@@ -94,7 +94,9 @@ describe("SalesPage", () => {
     stubLoad([product], [sale]);
     renderPage();
 
-    expect(await screen.findByText(/2\.00 kg × 5\.00 = 10\.00 · efectivo/)).toBeInTheDocument();
+    expect(
+      await screen.findByText(/2\.00 kg × 5\.00 = 10\.00 · efectivo · 02:00 p\. m\./),
+    ).toBeInTheDocument();
   });
 
   it("prefills the unit price with the selected product's catalog price", async () => {
@@ -124,7 +126,9 @@ describe("SalesPage", () => {
     await user.type(screen.getByLabelText(/^cantidad$/i), "2");
     await user.click(screen.getByRole("button", { name: /registrar venta/i }));
 
-    expect(await screen.findByText(/2\.00 kg × 5\.00 = 10\.00 · efectivo/)).toBeInTheDocument();
+    expect(
+      await screen.findByText(/2\.00 kg × 5\.00 = 10\.00 · efectivo · 02:00 p\. m\./),
+    ).toBeInTheDocument();
   });
 
   it("shows a translated error when stock is insufficient", async () => {

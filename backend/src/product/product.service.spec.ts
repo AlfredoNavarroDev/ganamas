@@ -15,14 +15,17 @@ describe('ProductService', () => {
 
   beforeEach(async () => {
     repository = {
-      create: jest.fn((value) => value),
+      create: jest.fn((value: Partial<Product>) => value),
       save: jest.fn((value) => Promise.resolve({ id: 'product-1', ...value })),
       find: jest.fn(),
       findOne: jest.fn(),
     };
 
     const module = await Test.createTestingModule({
-      providers: [ProductService, { provide: getRepositoryToken(Product), useValue: repository }],
+      providers: [
+        ProductService,
+        { provide: getRepositoryToken(Product), useValue: repository },
+      ],
     }).compile();
 
     service = module.get(ProductService);

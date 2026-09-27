@@ -15,14 +15,17 @@ describe('BusinessService', () => {
 
   beforeEach(async () => {
     repository = {
-      create: jest.fn((value) => value),
+      create: jest.fn((value: Partial<Business>) => value),
       save: jest.fn((value) => Promise.resolve({ id: 'business-1', ...value })),
       find: jest.fn(),
       findOne: jest.fn(),
     };
 
     const module = await Test.createTestingModule({
-      providers: [BusinessService, { provide: getRepositoryToken(Business), useValue: repository }],
+      providers: [
+        BusinessService,
+        { provide: getRepositoryToken(Business), useValue: repository },
+      ],
     }).compile();
 
     service = module.get(BusinessService);
@@ -38,7 +41,7 @@ describe('BusinessService', () => {
     expect(result).toMatchObject({ id: 'business-1', name: 'Frutas' });
   });
 
-  it('lists only the owner\'s active businesses by default', async () => {
+  it("lists only the owner's active businesses by default", async () => {
     repository.find.mockResolvedValue([]);
 
     await service.findAll('owner-1', true);
@@ -51,8 +54,8 @@ describe('BusinessService', () => {
   it('throws NotFoundException when updating a business the owner does not have', async () => {
     repository.findOne.mockResolvedValue(null);
 
-    await expect(service.update('owner-1', 'missing', { active: false })).rejects.toThrow(
-      NotFoundException,
-    );
+    await expect(
+      service.update('owner-1', 'missing', { active: false }),
+    ).rejects.toThrow(NotFoundException);
   });
 });

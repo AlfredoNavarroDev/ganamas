@@ -116,9 +116,18 @@ describe("SalesPage", () => {
     stubLoad([product], [haggledSale]);
     renderPage();
 
-    expect(
-      await screen.findByText(/regateo: -S\/ 1\.00 \(precio de lista S\/ 5\.00\)/i),
-    ).toBeInTheDocument();
+    expect(await screen.findByText("Regateo -S/ 1.00")).toBeInTheDocument();
+    expect(await screen.findByText(/^precio de lista: S\/ 5\.00$/i)).toBeInTheDocument();
+  });
+
+  it("does not show a discount badge for a sale sold at the catalog price", async () => {
+    setToken("token-123");
+    setActiveBusinessId("biz-1");
+    stubLoad([product], [sale]);
+    renderPage();
+
+    await screen.findByText("Palta hass");
+    expect(screen.queryByText(/regateo/i)).not.toBeInTheDocument();
   });
 
   it("prefills the unit price with the selected product's catalog price", async () => {

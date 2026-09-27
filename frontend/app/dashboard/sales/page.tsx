@@ -8,6 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Badge } from "@/components/ui/badge";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/components/ui/toast";
@@ -325,15 +326,20 @@ export default function SalesPage() {
                 className="motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-bottom-2 motion-safe:duration-500 motion-safe:ease-[cubic-bezier(0.16,1,0.3,1)] motion-safe:fill-mode-backwards flex items-center justify-between gap-3 rounded-md border p-3"
                 style={{ animationDelay: `${index * 60}ms` }}
               >
-                <div className="flex flex-col">
-                  <span className="font-medium">{sale.product.name}</span>
+                <div className="flex flex-col gap-1">
+                  <div className="flex items-center gap-2">
+                    <span className="font-medium">{sale.product.name}</span>
+                    {Number(sale.discount) > 0 ? (
+                      <Badge variant="default">Regateo -{soles(sale.discount)}</Badge>
+                    ) : null}
+                  </div>
                   <span className="text-sm text-muted-foreground">
                     {sale.quantity} {sale.product.unit} × {sale.unitPrice} = {sale.total} ·{" "}
                     {sale.paymentMethod} · {formatLimaTime(sale.soldAt)}
                   </span>
                   {Number(sale.discount) > 0 ? (
                     <span className="text-xs text-muted-foreground">
-                      Regateo: -{soles(sale.discount)} (precio de lista {soles(sale.listPrice)})
+                      Precio de lista: {soles(sale.listPrice)}
                     </span>
                   ) : null}
                 </div>

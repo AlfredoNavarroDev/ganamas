@@ -274,11 +274,31 @@ export default function SalesPage() {
                     onChange={(e) => setDiscount(e.target.value)}
                   />
                   {selectedProduct ? (
-                    <p className="text-xs text-muted-foreground">
-                      Precio de lista: {soles(selectedProduct.price)} × {quantity || 0} ={" "}
-                      {soles(fullTotal.toFixed(2))}. Poné acá cuánto le rebajaste al cliente en
-                      total, si hubo regateo. Total a cobrar: {soles(totalToCharge.toFixed(2))}.
-                    </p>
+                    <>
+                      <p className="text-xs text-muted-foreground">
+                        Poné acá cuánto le rebajaste al cliente en total, si hubo regateo.
+                      </p>
+                      <div className="flex flex-col gap-1 rounded-md border bg-muted/40 p-3">
+                        <div className="flex items-center justify-between text-sm">
+                          <span className="text-muted-foreground">
+                            Precio por {selectedProduct.unit}
+                          </span>
+                          <span className="font-medium">
+                            {soles(selectedProduct.price)} × {quantity || 0}
+                          </span>
+                        </div>
+                        <div className="flex items-center justify-between text-sm">
+                          <span className="text-muted-foreground">Subtotal</span>
+                          <span className="font-medium">{soles(fullTotal.toFixed(2))}</span>
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm text-muted-foreground">Total a cobrar</span>
+                          <span className="text-2xl font-bold text-primary">
+                            {soles(totalToCharge.toFixed(2))}
+                          </span>
+                        </div>
+                      </div>
+                    </>
                   ) : null}
                 </div>
                 <div className="flex flex-col gap-2">

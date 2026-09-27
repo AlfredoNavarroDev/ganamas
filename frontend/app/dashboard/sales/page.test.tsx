@@ -106,7 +106,8 @@ describe("SalesPage", () => {
     stubLoad([product], []);
     renderPage();
 
-    expect(await screen.findByText(/precio de lista: S\/ 5\.00/i)).toBeInTheDocument();
+    expect(await screen.findByText("Precio por kg")).toBeInTheDocument();
+    expect(await screen.findByText(/S\/ 5\.00/)).toBeInTheDocument();
   });
 
   it("shows the haggled discount next to a sale sold below the catalog price", async () => {
@@ -139,10 +140,10 @@ describe("SalesPage", () => {
 
     await user.type(await screen.findByLabelText(/^cantidad$/i), "2");
 
-    expect(
-      await screen.findByText(/precio de lista: S\/ 5\.00 × 2 = S\/ 10\.00/i),
-    ).toBeInTheDocument();
-    expect(await screen.findByText(/total a cobrar: S\/ 10\.00/i)).toBeInTheDocument();
+    expect(await screen.findByText("Precio por kg")).toBeInTheDocument();
+    expect(await screen.findByText(/S\/ 5\.00 × 2/)).toBeInTheDocument();
+    expect(await screen.findByText("Total a cobrar")).toBeInTheDocument();
+    expect(await screen.findAllByText("S/ 10.00")).toHaveLength(2);
   });
 
   it("subtracts the entered discount from the total to charge", async () => {
@@ -155,7 +156,7 @@ describe("SalesPage", () => {
     await user.type(await screen.findByLabelText(/^cantidad$/i), "2");
     await user.type(screen.getByLabelText(/descuento/i), "1");
 
-    expect(await screen.findByText(/total a cobrar: S\/ 9\.00/i)).toBeInTheDocument();
+    expect(await screen.findByText("S/ 9.00")).toBeInTheDocument();
   });
 
   it("registers a sale", async () => {

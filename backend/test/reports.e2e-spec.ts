@@ -1,10 +1,12 @@
 import { INestApplication, ValidationPipe } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
 import request from 'supertest';
+import { DataSource } from 'typeorm';
 import { AppModule } from '../src/app.module';
 
 describe('Reports (e2e)', () => {
   let app: INestApplication;
+  let dataSource: DataSource;
   let token: string;
   let businessId: string;
   let productId: string;
@@ -16,6 +18,7 @@ describe('Reports (e2e)', () => {
       new ValidationPipe({ whitelist: true, forbidNonWhitelisted: true, transform: true }),
     );
     await app.init();
+    dataSource = app.get(DataSource);
 
     const login = await request(app.getHttpServer()).post('/auth/login').send({
       username: process.env.SEED_USERNAME,
@@ -56,6 +59,10 @@ describe('Reports (e2e)', () => {
   });
 
   afterAll(async () => {
+    await dataSource.query('DELETE FROM sale WHERE business_id = $1', [businessId]);
+    await dataSource.query('DELETE FROM purchase WHERE business_id = $1', [businessId]);
+    await dataSource.query('DELETE FROM product WHERE business_id = $1', [businessId]);
+    await dataSource.query('DELETE FROM business WHERE id = $1', [businessId]);
     await app.close();
   });
 

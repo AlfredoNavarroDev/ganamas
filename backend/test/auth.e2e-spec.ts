@@ -2,6 +2,7 @@ import { INestApplication, ValidationPipe } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
 import request from 'supertest';
 import { AppModule } from '../src/app.module';
+import { TEST_USERNAME, TEST_PASSWORD } from './e2e-test-user';
 
 describe('Auth (e2e)', () => {
   let app: INestApplication;
@@ -29,8 +30,8 @@ describe('Auth (e2e)', () => {
     const response = await request(app.getHttpServer())
       .post('/auth/login')
       .send({
-        username: process.env.SEED_USERNAME,
-        password: process.env.SEED_PASSWORD,
+        username: TEST_USERNAME,
+        password: TEST_PASSWORD,
       });
 
     expect(response.status).toBe(200);
@@ -47,7 +48,7 @@ describe('Auth (e2e)', () => {
   it('rejects a request missing the password field', async () => {
     await request(app.getHttpServer())
       .post('/auth/login')
-      .send({ username: process.env.SEED_USERNAME })
+      .send({ username: TEST_USERNAME })
       .expect(400);
   });
 });

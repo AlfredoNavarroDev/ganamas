@@ -51,7 +51,7 @@ Ya no hay `SEED_USERNAME`/`SEED_PASSWORD` — el entrypoint no crea nada automá
 
 Productos, compras y ventas se cargan después desde la app misma (login con el usuario creado) — no hace falta SQL para eso.
 
-`seed:user` y `seed:demo` siguen existiendo como scripts (`npm run seed:user`, `npm run seed:demo`) para uso local en dev — el entrypoint de producción ya no los llama.
+No hay ningún script de seed en el repo (se eliminaron `seed:user`/`seed:demo`) — este es el único camino para crear el usuario inicial, en cualquier entorno.
 
 ### Alternativa: Render
 

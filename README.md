@@ -74,7 +74,6 @@ usar `npm run start:dev` local (ver abajo) en vez de Docker.
 cd backend
 npm install
 npm run migration:run
-npm run seed:user
 npm run start:dev      # http://localhost:3000, docs en /api/docs
 
 # Frontend

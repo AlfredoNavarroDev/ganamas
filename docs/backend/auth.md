@@ -1,9 +1,8 @@
 # auth
 
 Login del único usuario de la app y emisión/validación de JWT. No hay
-registro público (`/auth/register` no existe): el usuario se crea/actualiza
-vía `npm run seed:user` (`src/scripts/seed-user.ts`), leyendo
-`SEED_USERNAME`/`SEED_PASSWORD` del entorno.
+registro público (`/auth/register` no existe): el usuario se crea a mano
+directo en la DB (ver `DEPLOY.md` en la raíz), no hay script de seed.
 
 **Archivos:** `auth.controller.ts`, `auth.service.ts`, `auth.module.ts`,
 `jwt.strategy.ts`, `guards/jwt-auth.guard.ts`, `decorators/public.decorator.ts`,
@@ -42,12 +41,12 @@ vía `npm run seed:user` (`src/scripts/seed-user.ts`), leyendo
 
 ## Env vars relevantes
 
-`JWT_SECRET` (requerido, `getOrThrow`), `JWT_EXPIRES_IN` (default `30d`),
-`SEED_USERNAME`/`SEED_PASSWORD` (usados solo por el script de seed, no por
-este módulo directamente).
+`JWT_SECRET` (requerido, `getOrThrow`), `JWT_EXPIRES_IN` (default `30d`).
 
 ## Tests
 
 `auth.service.spec.ts` — login exitoso, credenciales inválidas (usuario
 inexistente y password incorrecto). `test/auth.e2e-spec.ts` — login real vía
-HTTP contra el usuario sembrado, y una ruta protegida sin token → `401`.
+HTTP contra un usuario de test que `test/global-setup.js` crea antes de correr
+la suite (`test/e2e-test-user.ts`, independiente de cualquier seed), y una
+ruta protegida sin token → `401`.

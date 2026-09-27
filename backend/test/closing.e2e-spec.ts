@@ -3,6 +3,7 @@ import { Test } from '@nestjs/testing';
 import request from 'supertest';
 import { DataSource } from 'typeorm';
 import { AppModule } from '../src/app.module';
+import { TEST_USERNAME, TEST_PASSWORD } from './e2e-test-user';
 
 describe('Closings (e2e)', () => {
   let app: INestApplication;
@@ -20,8 +21,8 @@ describe('Closings (e2e)', () => {
     dataSource = app.get(DataSource);
 
     const login = await request(app.getHttpServer()).post('/auth/login').send({
-      username: process.env.SEED_USERNAME,
-      password: process.env.SEED_PASSWORD,
+      username: TEST_USERNAME,
+      password: TEST_PASSWORD,
     });
     token = login.body.accessToken;
 

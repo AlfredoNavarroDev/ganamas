@@ -25,8 +25,6 @@ Copiar `.env.example` a `.env` y completar:
 | `DATABASE_URL` | Cadena de conexión Postgres | — |
 | `JWT_SECRET` | Secreto para firmar JWT | — |
 | `JWT_EXPIRES_IN` | Duración del token (sin refresh, app de un solo usuario) | `30d` |
-| `SEED_USERNAME` | Usuario único de la app | — |
-| `SEED_PASSWORD` | Password del usuario único | — |
 | `LOW_STOCK_THRESHOLD` | Umbral global de alerta de stock bajo en `/reports/kpis` | `5` |
 | `PORT` | Puerto HTTP | `3000` |
 | `NODE_ENV` | `development` habilita logging SQL y Swagger | — |
@@ -36,12 +34,12 @@ Copiar `.env.example` a `.env` y completar:
 ```bash
 npm install
 npm run migration:run
-npm run seed:user
 ```
 
-El seed de los 2 negocios iniciales ("Frutas", "Ropa") se hace manualmente vía
-`POST /businesses` una vez logueado — no es una migración ni parte de este
-script, es dato inicial de negocio.
+No hay seed automático. El usuario único de la app y sus negocios se crean
+a mano contra la DB (ver `DEPLOY.md` en la raíz del repo para los queries
+exactos), o vía `POST /businesses` una vez que ya existe un usuario y estás
+logueado.
 
 ## Correr
 
@@ -57,12 +55,12 @@ Documentación interactiva de la API (deshabilitada en `NODE_ENV=production`):
 
 ```bash
 npm test           # unitarios
-npm run test:e2e   # e2e — requiere Postgres migrado y sembrado (ver Setup)
+npm run test:e2e   # e2e — requiere Postgres migrado (crea su propio usuario de test)
 npm run test:cov   # cobertura
 ```
 
 ## Login
 
 Único endpoint público: `POST /auth/login`. No hay registro público — el
-usuario se crea/actualiza solo vía `npm run seed:user`. Todas las demás rutas
-requieren `Authorization: Bearer <token>`.
+usuario se crea a mano directo en la DB (ver `DEPLOY.md`). Todas las demás
+rutas requieren `Authorization: Bearer <token>`.

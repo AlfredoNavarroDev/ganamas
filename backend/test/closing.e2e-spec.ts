@@ -1,10 +1,12 @@
 import { INestApplication, ValidationPipe } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
 import request from 'supertest';
+import { DataSource } from 'typeorm';
 import { AppModule } from '../src/app.module';
 
 describe('Closings (e2e)', () => {
   let app: INestApplication;
+  let dataSource: DataSource;
   let token: string;
   let businessId: string;
 
@@ -15,6 +17,7 @@ describe('Closings (e2e)', () => {
       new ValidationPipe({ whitelist: true, forbidNonWhitelisted: true, transform: true }),
     );
     await app.init();
+    dataSource = app.get(DataSource);
 
     const login = await request(app.getHttpServer()).post('/auth/login').send({
       username: process.env.SEED_USERNAME,
@@ -30,6 +33,8 @@ describe('Closings (e2e)', () => {
   });
 
   afterAll(async () => {
+    await dataSource.query('DELETE FROM day_closing WHERE business_id = $1', [businessId]);
+    await dataSource.query('DELETE FROM business WHERE id = $1', [businessId]);
     await app.close();
   });
 

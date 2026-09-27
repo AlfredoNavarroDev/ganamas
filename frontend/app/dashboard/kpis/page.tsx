@@ -103,7 +103,7 @@ export default function KpisPage() {
         `/reports/summary?businessId=${activeBusinessId}&from=${from}&to=${to}`,
       );
       if (!res.ok) {
-        setLoadError("No se pudieron cargar los KPIs.");
+        setLoadError("No se pudo cargar el resumen.");
         return;
       }
       const data = (await res.json()) as Summary;

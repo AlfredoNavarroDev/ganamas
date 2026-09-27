@@ -3,6 +3,47 @@ import { ConfigService } from '@nestjs/config';
 import { DataSource } from 'typeorm';
 import Decimal from 'decimal.js';
 
+export interface DailyRow {
+  day: string;
+  revenue: string;
+  cost: string;
+  profit: string;
+  discount: string;
+}
+
+export interface PaymentMethodRow {
+  paymentMethod: string;
+  revenue: string;
+}
+
+interface TotalsRow {
+  revenue: string;
+  profit: string;
+  count: string;
+}
+
+export interface TopProductRow {
+  productId: string;
+  productName: string;
+  profit: string;
+}
+
+export interface BestDayRow {
+  day: string;
+  profit: string;
+}
+
+export interface BestHourRow {
+  hour: string;
+  profit: string;
+}
+
+export interface LowStockRow {
+  id: string;
+  name: string;
+  stock: number;
+}
+
 @Injectable()
 export class ReportsService {
   constructor(
@@ -11,7 +52,7 @@ export class ReportsService {
   ) {}
 
   async weeklySummary(businessId: string, from: string, to: string) {
-    const daily = await this.dataSource.query(
+    const daily = await this.dataSource.query<DailyRow[]>(
       `SELECT to_char(date_trunc('day', sold_at AT TIME ZONE 'America/Lima'), 'YYYY-MM-DD') AS day,
               COALESCE(SUM(total), 0) AS revenue,
               COALESCE(SUM(quantity * unit_cost), 0) AS cost,
@@ -24,7 +65,7 @@ export class ReportsService {
       [businessId, from, to],
     );
 
-    const byPaymentMethod = await this.dataSource.query(
+    const byPaymentMethod = await this.dataSource.query<PaymentMethodRow[]>(
       `SELECT payment_method AS "paymentMethod",
               COALESCE(SUM(total), 0) AS revenue
          FROM sale
@@ -37,7 +78,7 @@ export class ReportsService {
   }
 
   async summary(businessId: string, from: string, to: string) {
-    const totalsRows = await this.dataSource.query(
+    const totalsRows = await this.dataSource.query<TotalsRow[]>(
       `SELECT COALESCE(SUM(total), 0) AS revenue,
               COALESCE(SUM(profit), 0) AS profit,
               COUNT(*) AS count
@@ -46,7 +87,7 @@ export class ReportsService {
       [businessId, from, to],
     );
 
-    const topProductRows = await this.dataSource.query(
+    const topProductRows = await this.dataSource.query<TopProductRow[]>(
       `SELECT p.id AS "productId", p.name AS "productName",
               COALESCE(SUM(s.profit), 0) AS profit
          FROM sale s
@@ -58,7 +99,7 @@ export class ReportsService {
       [businessId, from, to],
     );
 
-    const byPaymentMethod = await this.dataSource.query(
+    const byPaymentMethod = await this.dataSource.query<PaymentMethodRow[]>(
       `SELECT payment_method AS "paymentMethod",
               COALESCE(SUM(total), 0) AS revenue
          FROM sale
@@ -83,7 +124,7 @@ export class ReportsService {
   }
 
   async kpis(businessId: string, from: string, to: string) {
-    const bestDayRows = await this.dataSource.query(
+    const bestDayRows = await this.dataSource.query<BestDayRow[]>(
       `SELECT to_char(date_trunc('day', sold_at AT TIME ZONE 'America/Lima'), 'YYYY-MM-DD') AS day,
               COALESCE(SUM(profit), 0) AS profit
          FROM sale
@@ -94,7 +135,7 @@ export class ReportsService {
       [businessId, from, to],
     );
 
-    const bestHourRows = await this.dataSource.query(
+    const bestHourRows = await this.dataSource.query<BestHourRow[]>(
       `SELECT EXTRACT(HOUR FROM sold_at AT TIME ZONE 'America/Lima') AS hour,
               COALESCE(SUM(profit), 0) AS profit
          FROM sale
@@ -105,7 +146,7 @@ export class ReportsService {
       [businessId, from, to],
     );
 
-    const topProducts = await this.dataSource.query(
+    const topProducts = await this.dataSource.query<TopProductRow[]>(
       `SELECT p.id AS "productId", p.name AS "productName",
               COALESCE(SUM(s.profit), 0) AS profit
          FROM sale s
@@ -117,8 +158,10 @@ export class ReportsService {
       [businessId, from, to],
     );
 
-    const lowStockThreshold = Number(this.configService.get('LOW_STOCK_THRESHOLD', '5'));
-    const lowStock = await this.dataSource.query(
+    const lowStockThreshold = Number(
+      this.configService.get('LOW_STOCK_THRESHOLD', '5'),
+    );
+    const lowStock = await this.dataSource.query<LowStockRow[]>(
       `SELECT id, name, stock
          FROM product
         WHERE business_id = $1 AND active = true AND stock < $2

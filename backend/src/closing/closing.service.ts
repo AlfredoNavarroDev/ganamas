@@ -1,4 +1,8 @@
-import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  ConflictException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { QueryFailedError, Repository } from 'typeorm';
 import { DayClosing } from '../entities/day-closing.entity';
@@ -12,7 +16,8 @@ const UNIQUE_VIOLATION = '23505';
 @Injectable()
 export class ClosingService {
   constructor(
-    @InjectRepository(DayClosing) private readonly closingRepository: Repository<DayClosing>,
+    @InjectRepository(DayClosing)
+    private readonly closingRepository: Repository<DayClosing>,
     private readonly reportsService: ReportsService,
   ) {}
 
@@ -44,7 +49,11 @@ export class ClosingService {
     try {
       return await this.closingRepository.save(closing);
     } catch (error) {
-      if (error instanceof QueryFailedError && error.driverError?.code === UNIQUE_VIOLATION) {
+      const driverError =
+        error instanceof QueryFailedError
+          ? (error.driverError as { code?: string } | undefined)
+          : undefined;
+      if (driverError?.code === UNIQUE_VIOLATION) {
         throw new ConflictException('El día ya fue cerrado.');
       }
       throw error;
@@ -63,9 +72,12 @@ export class ClosingService {
   findAll(query: ListClosingsQueryDto): Promise<DayClosing[]> {
     const qb = this.closingRepository
       .createQueryBuilder('closing')
-      .where('closing.business = :businessId', { businessId: query.businessId });
+      .where('closing.business = :businessId', {
+        businessId: query.businessId,
+      });
 
-    if (query.from) qb.andWhere('closing.closedDate >= :from', { from: query.from });
+    if (query.from)
+      qb.andWhere('closing.closedDate >= :from', { from: query.from });
     if (query.to) qb.andWhere('closing.closedDate <= :to', { to: query.to });
 
     return qb.orderBy('closing.closedDate', 'DESC').getMany();

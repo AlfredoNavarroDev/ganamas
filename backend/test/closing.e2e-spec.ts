@@ -2,20 +2,27 @@ import { INestApplication, ValidationPipe } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
 import request from 'supertest';
 import { DataSource } from 'typeorm';
+import { Server } from 'http';
 import { AppModule } from '../src/app.module';
 import { TEST_USERNAME, TEST_PASSWORD } from './e2e-test-user';
 
 describe('Closings (e2e)', () => {
-  let app: INestApplication;
+  let app: INestApplication<Server>;
   let dataSource: DataSource;
   let token: string;
   let businessId: string;
 
   beforeAll(async () => {
-    const moduleFixture = await Test.createTestingModule({ imports: [AppModule] }).compile();
+    const moduleFixture = await Test.createTestingModule({
+      imports: [AppModule],
+    }).compile();
     app = moduleFixture.createNestApplication();
     app.useGlobalPipes(
-      new ValidationPipe({ whitelist: true, forbidNonWhitelisted: true, transform: true }),
+      new ValidationPipe({
+        whitelist: true,
+        forbidNonWhitelisted: true,
+        transform: true,
+      }),
     );
     await app.init();
     dataSource = app.get(DataSource);
@@ -24,17 +31,19 @@ describe('Closings (e2e)', () => {
       username: TEST_USERNAME,
       password: TEST_PASSWORD,
     });
-    token = login.body.accessToken;
+    token = (login.body as { accessToken: string }).accessToken;
 
     const business = await request(app.getHttpServer())
       .post('/businesses')
       .set('Authorization', `Bearer ${token}`)
       .send({ name: `Closing test business ${Date.now()}` });
-    businessId = business.body.id;
+    businessId = (business.body as { id: string }).id;
   });
 
   afterAll(async () => {
-    await dataSource.query('DELETE FROM day_closing WHERE business_id = $1', [businessId]);
+    await dataSource.query('DELETE FROM day_closing WHERE business_id = $1', [
+      businessId,
+    ]);
     await dataSource.query('DELETE FROM business WHERE id = $1', [businessId]);
     await app.close();
   });
@@ -54,8 +63,13 @@ describe('Closings (e2e)', () => {
       .send({ businessId })
       .expect(201);
 
-    expect(first.body.snapshot).toBeDefined();
-    expect(first.body.closedDate).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+    const firstBody = first.body as {
+      id: string;
+      closedDate: string;
+      snapshot: unknown;
+    };
+    expect(firstBody.snapshot).toBeDefined();
+    expect(firstBody.closedDate).toMatch(/^\d{4}-\d{2}-\d{2}$/);
 
     await request(app.getHttpServer())
       .post('/closings')
@@ -68,14 +82,15 @@ describe('Closings (e2e)', () => {
       .query({ businessId })
       .set('Authorization', `Bearer ${token}`)
       .expect(200);
-    expect(today.body.id).toBe(first.body.id);
+    expect((today.body as { id: string }).id).toBe(firstBody.id);
 
     const history = await request(app.getHttpServer())
       .get('/closings')
       .query({ businessId })
       .set('Authorization', `Bearer ${token}`)
       .expect(200);
-    expect(history.body).toHaveLength(1);
-    expect(history.body[0].id).toBe(first.body.id);
+    const historyBody = history.body as { id: string }[];
+    expect(historyBody).toHaveLength(1);
+    expect(historyBody[0].id).toBe(firstBody.id);
   });
 });

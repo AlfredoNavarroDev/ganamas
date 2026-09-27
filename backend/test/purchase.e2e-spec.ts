@@ -1,11 +1,12 @@
 import { INestApplication, ValidationPipe } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
 import request from 'supertest';
+import { Server } from 'http';
 import { AppModule } from '../src/app.module';
 import { TEST_USERNAME, TEST_PASSWORD } from './e2e-test-user';
 
 describe('Purchase (e2e)', () => {
-  let app: INestApplication;
+  let app: INestApplication<Server>;
   let token: string;
   let businessId: string;
   let productId: string;
@@ -28,19 +29,19 @@ describe('Purchase (e2e)', () => {
       username: TEST_USERNAME,
       password: TEST_PASSWORD,
     });
-    token = login.body.accessToken;
+    token = (login.body as { accessToken: string }).accessToken;
 
     const business = await request(app.getHttpServer())
       .post('/businesses')
       .set('Authorization', `Bearer ${token}`)
       .send({ name: `Purchase test business ${Date.now()}` });
-    businessId = business.body.id;
+    businessId = (business.body as { id: string }).id;
 
     const product = await request(app.getHttpServer())
       .post('/products')
       .set('Authorization', `Bearer ${token}`)
       .send({ businessId, name: 'Palta hass', price: '5.00', unit: 'kg' });
-    productId = product.body.id;
+    productId = (product.body as { id: string }).id;
   });
 
   afterAll(async () => {
@@ -59,23 +60,27 @@ describe('Purchase (e2e)', () => {
       .query({ businessId })
       .set('Authorization', `Bearer ${token}`)
       .expect(200);
-    const updatedProduct = productResponse.body.find(
-      (p: { id: string }) => p.id === productId,
-    );
-    expect(updatedProduct.stock).toBe('10.00');
-    expect(updatedProduct.avgCost).toBe('4.00');
+    const products = productResponse.body as {
+      id: string;
+      stock: string;
+      avgCost: string;
+    }[];
+    const updatedProduct = products.find((p) => p.id === productId);
+    expect(updatedProduct?.stock).toBe('10.00');
+    expect(updatedProduct?.avgCost).toBe('4.00');
 
     const listResponse = await request(app.getHttpServer())
       .get('/purchases')
       .query({ businessId, page: 1, limit: 10 })
       .set('Authorization', `Bearer ${token}`)
       .expect(200);
-    expect(listResponse.body.total).toBeGreaterThanOrEqual(1);
-    expect(
-      listResponse.body.data.some(
-        (p: { productId?: string; product?: { id: string } }) =>
-          p.product?.id === productId,
-      ),
-    ).toBe(true);
+    const purchaseList = listResponse.body as {
+      total: number;
+      data: { productId?: string; product?: { id: string } }[];
+    };
+    expect(purchaseList.total).toBeGreaterThanOrEqual(1);
+    expect(purchaseList.data.some((p) => p.product?.id === productId)).toBe(
+      true,
+    );
   });
 });

@@ -1,14 +1,17 @@
 import { INestApplication } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
 import request from 'supertest';
+import { Server } from 'http';
 import { AppModule } from '../src/app.module';
 import { setupSwagger } from '../src/swagger';
 
 describe('Swagger (e2e)', () => {
-  let app: INestApplication;
+  let app: INestApplication<Server>;
 
   beforeAll(async () => {
-    const moduleFixture = await Test.createTestingModule({ imports: [AppModule] }).compile();
+    const moduleFixture = await Test.createTestingModule({
+      imports: [AppModule],
+    }).compile();
     app = moduleFixture.createNestApplication();
     setupSwagger(app);
     await app.init();

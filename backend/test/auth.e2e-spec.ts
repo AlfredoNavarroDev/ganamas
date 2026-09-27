@@ -1,11 +1,12 @@
 import { INestApplication, ValidationPipe } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
 import request from 'supertest';
+import { Server } from 'http';
 import { AppModule } from '../src/app.module';
 import { TEST_USERNAME, TEST_PASSWORD } from './e2e-test-user';
 
 describe('Auth (e2e)', () => {
-  let app: INestApplication;
+  let app: INestApplication<Server>;
 
   beforeAll(async () => {
     const moduleFixture = await Test.createTestingModule({
@@ -34,8 +35,9 @@ describe('Auth (e2e)', () => {
         password: TEST_PASSWORD,
       });
 
+    const body = response.body as { accessToken: string };
     expect(response.status).toBe(200);
-    expect(typeof response.body.accessToken).toBe('string');
+    expect(typeof body.accessToken).toBe('string');
   });
 
   it('rejects an unknown username', async () => {

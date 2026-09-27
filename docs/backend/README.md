@@ -4,10 +4,7 @@ Referencia técnica del código en `/backend/src`, módulo por módulo: qué hac
 qué endpoints expone, qué reglas de negocio aplica y qué validaciones tiene
 cada DTO. Para el porqué de las decisiones de diseño (modelo de datos,
 zona horaria, costo promedio ponderado, etc.) ver
-`sap-hermana-backend/CLAUDE.md`, que es la fuente de verdad del dominio.
-
-Esta carpeta se regenera con la skill `document-backend` — no editar a mano
-si un módulo cambia; correr la skill de nuevo.
+`docs/superpowers/specs/2026-09-21-sap-hermana-backend-design.md`.
 
 ## Módulos
 

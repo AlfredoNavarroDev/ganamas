@@ -2,9 +2,8 @@
 
 API NestJS para el registro de ventas y compras de dos negocios (frutas y ropa),
 con corte semanal y KPIs de rentabilidad. Ver
-`../sap-hermana-backend/CLAUDE.md` para las decisiones de dominio y reglas de
-negocio ya cerradas, y `../docs/superpowers/specs/2026-09-21-sap-hermana-backend-design.md`
-para el diseño de implementación.
+`../docs/superpowers/specs/2026-09-21-sap-hermana-backend-design.md`
+para las decisiones de dominio y el diseño de implementación.
 
 ## Stack
 

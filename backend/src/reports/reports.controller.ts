@@ -18,4 +18,9 @@ export class ReportsController {
   kpis(@Query() query: ReportsQueryDto) {
     return this.reportsService.kpis(query.businessId, query.from, query.to);
   }
+
+  @Get('summary')
+  summary(@Query() query: ReportsQueryDto) {
+    return this.reportsService.summary(query.businessId, query.from, query.to);
+  }
 }

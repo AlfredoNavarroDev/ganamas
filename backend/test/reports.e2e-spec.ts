@@ -88,4 +88,17 @@ describe('Reports (e2e)', () => {
     expect(response.body.lowStock).toEqual([]);
     expect(response.body.topProducts[0].productId).toBe(productId);
   });
+
+  it('computes revenue, profit, count and avgTicket for a range', async () => {
+    const response = await request(app.getHttpServer())
+      .get('/reports/summary')
+      .query({ businessId, from: '2026-01-01T00:00:00.000Z', to: '2026-01-11T00:00:00.000Z' })
+      .set('Authorization', `Bearer ${token}`)
+      .expect(200);
+
+    expect(response.body.count).toBe(1);
+    expect(Number(response.body.revenue)).toBeCloseTo(5.0, 2);
+    expect(Number(response.body.avgTicket)).toBeCloseTo(5.0, 2);
+    expect(response.body.topProduct.productId).toBe(productId);
+  });
 });

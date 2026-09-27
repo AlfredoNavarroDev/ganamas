@@ -156,6 +156,15 @@ describe("DashboardPage", () => {
     expect(link).toHaveAttribute("href", "/dashboard/sales");
   });
 
+  it("shows a link to the KPIs page when a business is active", async () => {
+    setToken("token-123");
+    vi.stubGlobal("fetch", vi.fn(async () => jsonResponse([{ id: "biz-1", name: "Frutas", active: true }])));
+    render(<ToastProvider><DashboardPage /></ToastProvider>);
+
+    const link = await screen.findByRole("button", { name: /^kpis$/i });
+    expect(link).toHaveAttribute("href", "/dashboard/kpis");
+  });
+
   it("shows an error alert when businesses fail to load", async () => {
     setToken("token-123");
     vi.stubGlobal("fetch", vi.fn(async () => { throw new Error("network down"); }));

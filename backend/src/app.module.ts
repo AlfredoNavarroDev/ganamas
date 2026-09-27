@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { AppController } from './app.controller';
 import { User } from './entities/user.entity';
 import { Business } from './entities/business.entity';
 import { Product } from './entities/product.entity';
@@ -41,5 +42,6 @@ import { ClosingModule } from './closing/closing.module';
     ReportsModule,
     ClosingModule,
   ],
+  controllers: [AppController],
 })
 export class AppModule {}

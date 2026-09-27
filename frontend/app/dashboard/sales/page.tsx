@@ -11,6 +11,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/components/ui/toast";
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 import { getToken } from "@/lib/auth";
 import { getActiveBusinessId } from "@/lib/business";
 import { authFetch } from "@/lib/api";
@@ -214,18 +215,23 @@ export default function SalesPage() {
               <form onSubmit={handleCreateSale} className="flex flex-col gap-3">
                 <div className="flex flex-col gap-2">
                   <Label htmlFor="product">Producto</Label>
-                  <select
-                    id="product"
-                    value={productId}
-                    onChange={(e) => handleProductChange(e.target.value)}
-                    className="h-9 rounded-md border border-input bg-transparent px-3 text-sm"
-                  >
-                    {products?.map((p) => (
-                      <option key={p.id} value={p.id}>
-                        {p.name} ({p.stock} {p.unit})
-                      </option>
-                    ))}
-                  </select>
+                  <Select value={productId} onValueChange={(value) => handleProductChange(value as string)}>
+                    <SelectTrigger id="product">
+                      <SelectValue>
+                        {(value: string) => {
+                          const product = products?.find((p) => p.id === value);
+                          return product ? `${product.name} (${product.stock} ${product.unit})` : value;
+                        }}
+                      </SelectValue>
+                    </SelectTrigger>
+                    <SelectContent>
+                      {products?.map((p) => (
+                        <SelectItem key={p.id} value={p.id}>
+                          {p.name} ({p.stock} {p.unit})
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
                 <div className="flex flex-col gap-2">
                   <Label htmlFor="quantity">Cantidad</Label>
@@ -249,20 +255,21 @@ export default function SalesPage() {
                 </div>
                 <div className="flex flex-col gap-2">
                   <Label htmlFor="payment-method">Método de pago</Label>
-                  <select
-                    id="payment-method"
+                  <Select
                     value={paymentMethod}
-                    onChange={(e) =>
-                      setPaymentMethod(e.target.value as Sale["paymentMethod"])
-                    }
-                    className="h-9 rounded-md border border-input bg-transparent px-3 text-sm"
+                    onValueChange={(value) => setPaymentMethod(value as Sale["paymentMethod"])}
                   >
-                    {PAYMENT_METHODS.map((method) => (
-                      <option key={method} value={method}>
-                        {method}
-                      </option>
-                    ))}
-                  </select>
+                    <SelectTrigger id="payment-method">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {PAYMENT_METHODS.map((method) => (
+                        <SelectItem key={method} value={method}>
+                          {method}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
                 {createError ? (
                   <Alert variant="destructive" aria-live="polite">

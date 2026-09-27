@@ -17,10 +17,6 @@ services:
         sync: false
       - key: JWT_EXPIRES_IN
         value: 30d
-      - key: SEED_USERNAME
-        sync: false
-      - key: SEED_PASSWORD
-        sync: false
       - key: LOW_STOCK_THRESHOLD
         value: "5"
       - key: NODE_ENV

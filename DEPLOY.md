@@ -11,9 +11,7 @@ cd backend
 fly launch --no-deploy   # detecta fly.toml existente, NO pisar el archivo si pregunta
 fly secrets set DATABASE_URL="postgresql://...pooler..." \
   FRONTEND_URL="https://tu-app.vercel.app" \
-  JWT_SECRET="$(openssl rand -hex 32)" \
-  SEED_USERNAME="admin" \
-  SEED_PASSWORD="algo-seguro"
+  JWT_SECRET="$(openssl rand -hex 32)"
 fly deploy
 ```
 
@@ -21,13 +19,39 @@ Variables ya fijas en `fly.toml` (`[env]`): `NODE_ENV`, `DATABASE_SSL`, `JWT_EXP
 - `DATABASE_URL` — connection string de Neon (pooled, host con `-pooler`)
 - `FRONTEND_URL` — URL de producción de Vercel. Acepta varias separadas por coma (soporte agregado en `main.ts`) si querés permitir un preview fijo también.
 - `JWT_SECRET` — secreto random, no el `change-me` de dev
-- `SEED_USERNAME` / `SEED_PASSWORD` — user único de la app
 
 `min_machines_running = 1` + `auto_stop_machines = false` en `fly.toml` → sin cold sleep, siempre activo (entra en el free tier de Fly con 1 VM shared-cpu-1x/256mb). Región `gru` (São Paulo) — misma región que tu Neon DB (`sa-east-1`), latencia mínima entre backend y DB.
 
-El entrypoint corre migraciones + seed (idempotente) en cada deploy, después levanta el server — no hay que correr nada a mano. Health check en `/health` cada 15s.
+El entrypoint solo corre migraciones en cada deploy, después levanta el server — **ya no siembra usuario ni negocios demo automáticamente** (ver sección siguiente). Health check en `/health` cada 15s.
 
 Al terminar el deploy, la URL pública queda en `https://ganamas-backend.fly.dev` (o el nombre que hayas puesto) — se necesita para el frontend.
+
+### Usuario y negocio inicial (manual, una sola vez)
+
+Ya no hay `SEED_USERNAME`/`SEED_PASSWORD` — el entrypoint no crea nada automático en producción. Crear el usuario y el negocio a mano, directo contra Neon (psql, o el SQL editor del dashboard de Neon):
+
+1. Generar el hash del password (desde `backend/`, usa el `bcrypt` ya instalado):
+   ```
+   node -e "console.log(require('bcrypt').hashSync('TU_PASSWORD_REAL', 12))"
+   ```
+2. Crear el usuario (el id, created_at, updated_at tienen default en la DB, no hace falta pasarlos):
+   ```sql
+   INSERT INTO "user" (username, password_hash)
+   VALUES ('admin', '$2b$12$PEGA_AQUI_EL_HASH_DEL_PASO_1');
+   ```
+3. Crear el negocio, con el `owner_id` del usuario recién creado:
+   ```sql
+   INSERT INTO business (owner_id, name)
+   VALUES (
+     (SELECT id FROM "user" WHERE username = 'admin'),
+     'Nombre real del negocio'
+   );
+   ```
+   Repetir el INSERT (con otro `name`) por cada negocio adicional (ej. uno para frutas, otro para ropa).
+
+Productos, compras y ventas se cargan después desde la app misma (login con el usuario creado) — no hace falta SQL para eso.
+
+`seed:user` y `seed:demo` siguen existiendo como scripts (`npm run seed:user`, `npm run seed:demo`) para uso local en dev — el entrypoint de producción ya no los llama.
 
 ### Alternativa: Render
 

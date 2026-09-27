@@ -18,6 +18,7 @@ Todos requieren `Authorization: Bearer <token>`. Ambos toman
 | Método | Ruta | Respuesta |
 |---|---|---|
 | GET | `/reports/weekly-summary` | `{ daily[], byPaymentMethod[] }` |
+| GET | `/reports/summary` | `{ revenue, profit, count, avgTicket, topProduct, byPaymentMethod[] }` |
 | GET | `/reports/kpis` | `{ bestDay, bestHour, topProducts[], lowStock[] }` |
 
 ## `weeklySummary`
@@ -25,6 +26,24 @@ Todos requieren `Authorization: Bearer <token>`. Ambos toman
 - `daily`: una fila por día (`day` como texto `YYYY-MM-DD`), con
   `revenue`/`cost`/`profit`/`discount` sumados.
 - `byPaymentMethod`: revenue agrupado por `payment_method`.
+
+## `summary`
+
+Totales agregados del rango completo (no desglosado por día) — es el
+endpoint que usa el frontend en `/dashboard/kpis` para las pestañas
+día/semana/mes (ver `docs/frontend/kpis.md`) y el que `ClosingService`
+llama internamente para congelar el snapshot de un cierre de día (ver
+`docs/backend/closing.md`).
+
+- `revenue`, `profit`: `Decimal` formateado a 2 decimales (`toFixed(2)`),
+  no el `string` crudo de Postgres.
+- `count`: número de ventas en el rango (`COUNT(*)`).
+- `avgTicket`: `revenue / count`, `"0.00"` si `count` es 0 (evita división
+  por cero explícitamente, no delega en que Postgres devuelva `NULL`).
+- `topProduct`: el de mayor profit acumulado en el rango, `null` si no hubo
+  ventas — misma forma que un elemento de `topProducts` en `kpis`.
+- `byPaymentMethod`: igual que en `weeklySummary`, pero sobre el rango
+  completo en vez de por día.
 
 ## `kpis`
 
@@ -65,6 +84,10 @@ adyacente. `BETWEEN` además es inclusivo en ambos extremos.
 
 - `bestDay`/`bestHour` devuelven `null` para un rango sin ventas — ese
   camino no tiene test unitario dedicado (solo se testea la SQL enviada).
+- `summary` no tiene test unitario ni e2e dedicado (a diferencia de
+  `weeklySummary` y `kpis`) — su única cobertura indirecta es
+  `closing.service.spec.ts`, que mockea `ReportsService` entero y nunca
+  ejercita el SQL real de `summary`.
 - Sin chequeo de ownership sobre `businessId` (ver README de esta carpeta).
 
 ## Tests

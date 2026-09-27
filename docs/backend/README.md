@@ -16,6 +16,7 @@ zona horaria, costo promedio ponderado, etc.) ver
 | [purchase](./purchase.md) | Registro de compras: recalcula stock y costo promedio |
 | [sale](./sale.md) | Registro de ventas: control de stock, snapshot de precio/costo |
 | [reports](./reports.md) | Corte semanal y KPIs, agregación consciente de zona horaria Lima |
+| [closing](./closing.md) | Cierre de día: congela un snapshot de `reports.summary()` |
 
 ## Convenciones transversales (no repetidas en cada módulo)
 

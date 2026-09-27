@@ -53,10 +53,6 @@ Productos, compras y ventas se cargan después desde la app misma (login con el 
 
 No hay ningún script de seed en el repo (se eliminaron `seed:user`/`seed:demo`) — este es el único camino para crear el usuario inicial, en cualquier entorno.
 
-### Alternativa: Render
-
-Si en algún momento preferís Render en vez de Fly, `render.yaml` ya está en la raíz del repo, listo para "New +" → "Blueprint" (mismo Dockerfile, health check `/health`). Nota: el free tier de Render duerme tras inactividad — para always-on ahí hace falta el plan Starter ($7/mes).
-
 ## Frontend (Vercel)
 
 Importar el repo en Vercel. Como es monorepo, en el paso de configuración del proyecto:

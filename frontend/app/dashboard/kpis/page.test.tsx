@@ -96,9 +96,9 @@ describe("KpisPage", () => {
     stubLoad({});
     renderPage();
 
-    expect(await screen.findByText("10.00")).toBeInTheDocument();
-    expect(screen.getByText("4.00")).toBeInTheDocument();
-    expect(screen.getByText("Palta hass · ganancia 4.00")).toBeInTheDocument();
+    expect(await screen.findByTestId("kpi-revenue")).toHaveTextContent("S/ 10.00");
+    expect(screen.getByTestId("kpi-profit")).toHaveTextContent("S/ 4.00");
+    expect(screen.getByText("Palta hass · ganancia S/ 4.00")).toBeInTheDocument();
   });
 
   it("refetches the summary with a different range when switching tabs", async () => {
@@ -118,7 +118,7 @@ describe("KpisPage", () => {
     const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
     renderPage();
 
-    await screen.findByText("10.00");
+    await screen.findByTestId("kpi-revenue");
     const dayCall = fetchMock.mock.calls.find(([url]) => url.includes("/reports/summary"));
     expect(dayCall?.[0]).toContain("from=2026-01-07T05:00:00.000Z");
 

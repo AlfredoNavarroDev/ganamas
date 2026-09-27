@@ -43,6 +43,10 @@ function rangeForTab(tab: Tab): DateRange {
   return limaMonthRange();
 }
 
+function soles(amount: string): string {
+  return `S/ ${amount}`;
+}
+
 function formatLimaTime(iso: string): string {
   return new Intl.DateTimeFormat("es-PE", {
     timeZone: "America/Lima",
@@ -201,11 +205,15 @@ export default function KpisPage() {
               <CardContent className="grid grid-cols-2 gap-3">
                 <div className="flex flex-col">
                   <span className="text-sm text-muted-foreground">Ingresos</span>
-                  <span className="text-lg font-medium">{summary?.revenue ?? "0.00"}</span>
+                  <span className="text-lg font-medium" data-testid="kpi-revenue">
+                    {soles(summary?.revenue ?? "0.00")}
+                  </span>
                 </div>
                 <div className="flex flex-col">
                   <span className="text-sm text-muted-foreground">Ganancia</span>
-                  <span className="text-lg font-medium">{summary?.profit ?? "0.00"}</span>
+                  <span className="text-lg font-medium" data-testid="kpi-profit">
+                    {soles(summary?.profit ?? "0.00")}
+                  </span>
                 </div>
                 <div className="flex flex-col">
                   <span className="text-sm text-muted-foreground">Ventas</span>
@@ -213,7 +221,7 @@ export default function KpisPage() {
                 </div>
                 <div className="flex flex-col">
                   <span className="text-sm text-muted-foreground">Ticket promedio</span>
-                  <span className="text-lg font-medium">{summary?.avgTicket ?? "0.00"}</span>
+                  <span className="text-lg font-medium">{soles(summary?.avgTicket ?? "0.00")}</span>
                 </div>
               </CardContent>
             </Card>
@@ -225,7 +233,7 @@ export default function KpisPage() {
               <CardContent>
                 {summary?.topProduct ? (
                   <p>
-                    {summary.topProduct.productName} · ganancia {summary.topProduct.profit}
+                    {summary.topProduct.productName} · ganancia {soles(summary.topProduct.profit)}
                   </p>
                 ) : (
                   <p className="text-sm text-muted-foreground">Sin ventas en este período.</p>
@@ -242,7 +250,7 @@ export default function KpisPage() {
                   summary.byPaymentMethod.map((row) => (
                     <div key={row.paymentMethod} className="flex justify-between text-sm">
                       <span className="capitalize">{row.paymentMethod}</span>
-                      <span>{`S/ ${row.revenue}`}</span>
+                      <span>{soles(row.revenue)}</span>
                     </div>
                   ))
                 ) : (
@@ -277,7 +285,7 @@ export default function KpisPage() {
               >
                 <span>{item.closedDate}</span>
                 <span className="text-muted-foreground">
-                  Ingresos {item.snapshot.revenue} · Ganancia {item.snapshot.profit}
+                  Ingresos {soles(item.snapshot.revenue)} · Ganancia {soles(item.snapshot.profit)}
                 </span>
               </div>
             ))}

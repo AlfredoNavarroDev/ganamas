@@ -5,11 +5,13 @@
 .playwright-mcp/
 /*.png
 
-# docs/ tracks only the backend module documentation (docs/backend/) —
+# docs/ tracks only the generated reference docs (docs/backend/, docs/frontend/) —
 # everything else (planning specs, one-off plans, scratch notes) stays local
 docs/*
 !docs/backend
 !docs/backend/**
+!docs/frontend
+!docs/frontend/**
 .neon
 .env.neon
 node_modules/

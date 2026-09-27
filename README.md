@@ -25,7 +25,8 @@ negocios/personas más adelante sin tocar código, solo datos.
 ```
 backend/     API NestJS (auth, businesses, products, purchases, sales, reports)
 frontend/    App Next.js — UI de registro rápido y reportes
-docs/        Specs y planes de implementación (superpowers/specs, superpowers/plans)
+docs/        docs/backend y docs/frontend: referencia por módulo/página, generada con la skill `document`
+             docs/superpowers: specs y planes de implementación (local, no versionado)
 ```
 
 Las decisiones de negocio ya cerradas (modelo de datos, costo promedio

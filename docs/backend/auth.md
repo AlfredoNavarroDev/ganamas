@@ -2,7 +2,7 @@
 
 Login del único usuario de la app y emisión/validación de JWT. No hay
 registro público (`/auth/register` no existe): el usuario se crea a mano
-directo en la DB (ver `DEPLOY.md` en la raíz), no hay script de seed.
+directo en la DB (ver `docs/deployment/README.md`), no hay script de seed.
 
 **Archivos:** `auth.controller.ts`, `auth.service.ts`, `auth.module.ts`,
 `jwt.strategy.ts`, `guards/jwt-auth.guard.ts`, `decorators/public.decorator.ts`,

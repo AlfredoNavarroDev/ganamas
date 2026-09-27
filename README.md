@@ -25,7 +25,7 @@ negocios/personas más adelante sin tocar código, solo datos.
 ```
 backend/     API NestJS (auth, businesses, products, purchases, sales, reports)
 frontend/    App Next.js — UI de registro rápido y reportes
-docs/        docs/backend y docs/frontend: referencia por módulo/página, generada con la skill `document`
+docs/        docs/backend, docs/frontend, docs/deployment: referencia por módulo/página/deploy, generada con la skill `document`
              docs/superpowers: specs y planes de implementación (local, no versionado)
 ```
 
@@ -39,7 +39,7 @@ tarea-por-tarea en `docs/superpowers/plans/2026-09-21-sap-hermana-backend.md`.
 
 Backend (auth, los 5 módulos de dominio, reportes con agregación consciente
 de la zona horaria de Lima, Swagger, CI/CD) y frontend están implementados y
-desplegados: backend en Fly.io, frontend en Vercel (ver `DEPLOY.md`).
+desplegados: backend en Fly.io, frontend en Vercel (ver `docs/deployment/README.md`).
 
 ## Levantar todo con Docker (automático)
 

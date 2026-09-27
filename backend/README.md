@@ -36,7 +36,7 @@ npm run migration:run
 ```
 
 No hay seed automático. El usuario único de la app y sus negocios se crean
-a mano contra la DB (ver `DEPLOY.md` en la raíz del repo para los queries
+a mano contra la DB (ver `docs/deployment/README.md` para los queries
 exactos), o vía `POST /businesses` una vez que ya existe un usuario y estás
 logueado.
 
@@ -61,5 +61,5 @@ npm run test:cov   # cobertura
 ## Login
 
 Único endpoint público: `POST /auth/login`. No hay registro público — el
-usuario se crea a mano directo en la DB (ver `DEPLOY.md`). Todas las demás
+usuario se crea a mano directo en la DB (ver `docs/deployment/README.md`). Todas las demás
 rutas requieren `Authorization: Bearer <token>`.

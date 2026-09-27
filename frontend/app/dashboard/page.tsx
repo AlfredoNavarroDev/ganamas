@@ -193,7 +193,7 @@ export default function DashboardPage() {
                 nativeButton={false}
                 render={<Link href="/dashboard/kpis" />}
               >
-                KPIs
+                Resumen
               </Button>
             </div>
           ) : null}

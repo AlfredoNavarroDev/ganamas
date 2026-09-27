@@ -157,12 +157,12 @@ describe("DashboardPage", () => {
     expect(link).toHaveAttribute("href", "/dashboard/sales");
   });
 
-  it("shows a link to the KPIs page when a business is active", async () => {
+  it("shows a link to the summary page when a business is active", async () => {
     setToken("token-123");
     vi.stubGlobal("fetch", vi.fn(async () => jsonResponse([{ id: "biz-1", name: "Frutas", active: true }])));
     render(<ToastProvider><DashboardPage /></ToastProvider>);
 
-    const link = await screen.findByRole("button", { name: /^kpis$/i });
+    const link = await screen.findByRole("button", { name: /^resumen$/i });
     expect(link).toHaveAttribute("href", "/dashboard/kpis");
   });
 

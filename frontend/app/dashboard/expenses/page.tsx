@@ -41,6 +41,7 @@ export default function ExpensesPage() {
   const [businessId, setBusinessId] = useState<string | null>(null);
 
   const [expenses, setExpenses] = useState<Expense[] | null>(null);
+  const [total, setTotal] = useState<number | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
 
   const [amount, setAmount] = useState("");
@@ -74,8 +75,9 @@ export default function ExpensesPage() {
         setLoadError("No se pudieron cargar tus gastos.");
         return;
       }
-      const data = (await res.json()) as { data: Expense[] };
+      const data = (await res.json()) as { data: Expense[]; total: number };
       setExpenses(data.data);
+      setTotal(data.total);
     } catch {
       setLoadError("No se pudo conectar con el servidor. Probá de nuevo.");
     }
@@ -192,6 +194,12 @@ export default function ExpensesPage() {
                 <span className="font-medium">{soles(expense.amount)}</span>
               </div>
             ))}
+
+            {expenses && total !== null && total > expenses.length ? (
+              <p className="text-sm text-muted-foreground">
+                Mostrando {expenses.length} de {total} gastos.
+              </p>
+            ) : null}
           </CardContent>
         </Card>
       </div>

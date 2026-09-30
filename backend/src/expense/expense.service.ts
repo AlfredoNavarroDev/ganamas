@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
+import Decimal from 'decimal.js';
 import { Business } from '../entities/business.entity';
 import { Expense } from '../entities/expense.entity';
 import { CreateExpenseDto } from './dto/create-expense.dto';
@@ -16,7 +17,7 @@ export class ExpenseService {
   create(dto: CreateExpenseDto) {
     const expense = this.expenseRepository.create({
       business: { id: dto.businessId } as Business,
-      amount: dto.amount,
+      amount: new Decimal(dto.amount).toFixed(2),
       description: dto.description,
       expensedAt: dto.expensedAt ? new Date(dto.expensedAt) : undefined,
     });

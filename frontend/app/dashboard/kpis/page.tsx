@@ -75,8 +75,14 @@ export default function KpisPage() {
   const [business, setBusiness] = useState<Business | null>(null);
   const [goalInput, setGoalInput] = useState("");
   const [savingGoal, setSavingGoal] = useState(false);
+  const [editingGoal, setEditingGoal] = useState(false);
 
   const { toast } = useToast();
+
+  const hasGoal = business?.dailyProfitGoal != null && Number(business.dailyProfitGoal) > 0;
+  const goalProgressPct = hasGoal
+    ? Math.min(Math.round((Number(summary?.profit ?? 0) / Number(business!.dailyProfitGoal)) * 100), 100)
+    : 0;
 
   useEffect(() => {
     if (!getToken()) {
@@ -172,6 +178,7 @@ export default function KpisPage() {
       }
       setBusiness((await res.json()) as Business);
       setGoalInput("");
+      setEditingGoal(false);
     } catch {
       toast("No se pudo conectar con el servidor. Probá de nuevo.", "destructive");
     } finally {
@@ -289,42 +296,39 @@ export default function KpisPage() {
                   <CardTitle className="text-lg">Meta diaria</CardTitle>
                 </CardHeader>
                 <CardContent className="flex flex-col gap-3">
-                  {business.dailyProfitGoal ? (
+                  {hasGoal && !editingGoal ? (
                     <>
                       <div className="flex items-center justify-between text-sm">
                         <span className="text-muted-foreground">
-                          {soles(summary?.profit ?? "0.00")} / {soles(business.dailyProfitGoal)}
+                          {soles(summary?.profit ?? "0.00")} / {soles(business.dailyProfitGoal as string)}
                         </span>
-                        <span className="font-medium">
-                          {Math.min(
-                            Math.round(
-                              (Number(summary?.profit ?? 0) / Number(business.dailyProfitGoal)) * 100,
-                            ),
-                            100,
-                          )}%
-                        </span>
+                        <span className="font-medium">{goalProgressPct}%</span>
                       </div>
-                      <div className="h-2 w-full overflow-hidden rounded-full bg-muted">
+                      <div
+                        className="h-2 w-full overflow-hidden rounded-full bg-muted"
+                        role="progressbar"
+                        aria-valuenow={goalProgressPct}
+                        aria-valuemin={0}
+                        aria-valuemax={100}
+                      >
                         <div
                           className="h-full bg-primary"
-                          style={{
-                            width: `${Math.min(
-                              (Number(summary?.profit ?? 0) / Number(business.dailyProfitGoal)) * 100,
-                              100,
-                            )}%`,
-                          }}
+                          style={{ width: `${goalProgressPct}%` }}
                         />
                       </div>
                       <Button
                         type="button"
                         variant="outline"
-                        onClick={() => setGoalInput(business.dailyProfitGoal ?? "")}
+                        onClick={() => {
+                          setGoalInput(business.dailyProfitGoal ?? "");
+                          setEditingGoal(true);
+                        }}
                       >
                         Editar
                       </Button>
                     </>
                   ) : null}
-                  {!business.dailyProfitGoal || goalInput ? (
+                  {!hasGoal || editingGoal ? (
                     <div className="flex flex-col gap-2">
                       <Label htmlFor="daily-goal">Meta diaria de ganancia</Label>
                       <Input
@@ -333,9 +337,24 @@ export default function KpisPage() {
                         value={goalInput}
                         onChange={(e) => setGoalInput(e.target.value)}
                       />
-                      <Button type="button" disabled={savingGoal} onClick={handleSaveGoal}>
-                        {savingGoal ? "Guardando…" : "Guardar meta"}
-                      </Button>
+                      <div className="flex gap-2">
+                        <Button
+                          type="button"
+                          disabled={savingGoal || !goalInput}
+                          onClick={handleSaveGoal}
+                        >
+                          {savingGoal ? "Guardando…" : "Guardar meta"}
+                        </Button>
+                        {hasGoal ? (
+                          <Button
+                            type="button"
+                            variant="outline"
+                            onClick={() => setEditingGoal(false)}
+                          >
+                            Cancelar
+                          </Button>
+                        ) : null}
+                      </div>
                     </div>
                   ) : null}
                 </CardContent>

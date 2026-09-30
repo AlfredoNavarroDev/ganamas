@@ -9,6 +9,7 @@ export class AddDailyProfitGoalToBusiness1730000008000
     await queryRunner.query(`
       ALTER TABLE business
       ADD COLUMN daily_profit_goal NUMERIC(10,2) NULL
+        CHECK (daily_profit_goal IS NULL OR daily_profit_goal > 0)
     `);
   }
 

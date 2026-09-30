@@ -263,7 +263,13 @@ export default function SalesPage() {
               <form onSubmit={handleCreateSale} className="flex flex-col gap-3">
                 <div className="flex flex-col gap-2">
                   <Label htmlFor="product">Producto</Label>
-                  <Select value={productId} onValueChange={(value) => setProductId(value as string)}>
+                  <Select
+                    value={productId}
+                    onValueChange={(value) => {
+                      setProductId(value as string);
+                      setEditingPrice(false);
+                    }}
+                  >
                     <SelectTrigger id="product">
                       <SelectValue>
                         {(value: string) => {

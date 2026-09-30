@@ -8,6 +8,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/components/ui/toast";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { getToken } from "@/lib/auth";
 import { getActiveBusinessId } from "@/lib/business";
 import { authFetch } from "@/lib/api";
@@ -30,6 +32,8 @@ type DayClosing = {
   closedAt: string;
   snapshot: Summary;
 };
+
+type Business = { id: string; name: string; active: boolean; dailyProfitGoal: string | null };
 
 const TABS: { key: Tab; label: string }[] = [
   { key: "day", label: "Día" },
@@ -68,6 +72,10 @@ export default function KpisPage() {
   const [history, setHistory] = useState<DayClosing[] | null>(null);
   const [closing, setClosing] = useState(false);
 
+  const [business, setBusiness] = useState<Business | null>(null);
+  const [goalInput, setGoalInput] = useState("");
+  const [savingGoal, setSavingGoal] = useState(false);
+
   const { toast } = useToast();
 
   useEffect(() => {
@@ -85,6 +93,7 @@ export default function KpisPage() {
     setChecked(true);
     loadTodayClosing(activeBusinessId);
     loadHistory(activeBusinessId);
+    loadBusiness(activeBusinessId);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -134,6 +143,39 @@ export default function KpisPage() {
       setHistory((await res.json()) as DayClosing[]);
     } catch {
       // El historial queda vacío; no es crítico para el flujo principal.
+    }
+  }
+
+  async function loadBusiness(activeBusinessId: string) {
+    try {
+      const res = await authFetch(`/businesses?active=true`);
+      if (!res.ok) return;
+      const data = (await res.json()) as Business[];
+      setBusiness(data.find((b) => b.id === activeBusinessId) ?? null);
+    } catch {
+      // La meta queda sin mostrar; no es crítico para el resto del dashboard.
+    }
+  }
+
+  async function handleSaveGoal() {
+    if (!business) return;
+    setSavingGoal(true);
+    try {
+      const res = await authFetch(`/businesses/${business.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ dailyProfitGoal: goalInput }),
+      });
+      if (!res.ok) {
+        toast("No se pudo guardar la meta.", "destructive");
+        return;
+      }
+      setBusiness((await res.json()) as Business);
+      setGoalInput("");
+    } catch {
+      toast("No se pudo conectar con el servidor. Probá de nuevo.", "destructive");
+    } finally {
+      setSavingGoal(false);
     }
   }
 
@@ -240,6 +282,65 @@ export default function KpisPage() {
                 )}
               </CardContent>
             </Card>
+
+            {activeTab === "day" && business ? (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-lg">Meta diaria</CardTitle>
+                </CardHeader>
+                <CardContent className="flex flex-col gap-3">
+                  {business.dailyProfitGoal ? (
+                    <>
+                      <div className="flex items-center justify-between text-sm">
+                        <span className="text-muted-foreground">
+                          {soles(summary?.profit ?? "0.00")} / {soles(business.dailyProfitGoal)}
+                        </span>
+                        <span className="font-medium">
+                          {Math.min(
+                            Math.round(
+                              (Number(summary?.profit ?? 0) / Number(business.dailyProfitGoal)) * 100,
+                            ),
+                            100,
+                          )}%
+                        </span>
+                      </div>
+                      <div className="h-2 w-full overflow-hidden rounded-full bg-muted">
+                        <div
+                          className="h-full bg-primary"
+                          style={{
+                            width: `${Math.min(
+                              (Number(summary?.profit ?? 0) / Number(business.dailyProfitGoal)) * 100,
+                              100,
+                            )}%`,
+                          }}
+                        />
+                      </div>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => setGoalInput(business.dailyProfitGoal ?? "")}
+                      >
+                        Editar
+                      </Button>
+                    </>
+                  ) : null}
+                  {!business.dailyProfitGoal || goalInput ? (
+                    <div className="flex flex-col gap-2">
+                      <Label htmlFor="daily-goal">Meta diaria de ganancia</Label>
+                      <Input
+                        id="daily-goal"
+                        inputMode="decimal"
+                        value={goalInput}
+                        onChange={(e) => setGoalInput(e.target.value)}
+                      />
+                      <Button type="button" disabled={savingGoal} onClick={handleSaveGoal}>
+                        {savingGoal ? "Guardando…" : "Guardar meta"}
+                      </Button>
+                    </div>
+                  ) : null}
+                </CardContent>
+              </Card>
+            ) : null}
 
             <Card>
               <CardHeader>

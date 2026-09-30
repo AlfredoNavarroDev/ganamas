@@ -195,6 +195,13 @@ export default function DashboardPage() {
               >
                 Resumen
               </Button>
+              <Button
+                variant="outline"
+                nativeButton={false}
+                render={<Link href="/dashboard/expenses" />}
+              >
+                Gastos
+              </Button>
             </div>
           ) : null}
 

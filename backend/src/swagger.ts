@@ -15,6 +15,7 @@ export function setupSwagger(app: INestApplication) {
     .addTag('Businesses')
     .addTag('Products')
     .addTag('Purchases')
+    .addTag('Expenses')
     .addTag('Sales')
     .addTag('Reports')
     .build();

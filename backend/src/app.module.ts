@@ -16,6 +16,7 @@ import { PurchaseModule } from './purchase/purchase.module';
 import { SaleModule } from './sale/sale.module';
 import { ReportsModule } from './reports/reports.module';
 import { ClosingModule } from './closing/closing.module';
+import { ExpenseModule } from './expense/expense.module';
 
 @Module({
   imports: [
@@ -39,6 +40,7 @@ import { ClosingModule } from './closing/closing.module';
     BusinessModule,
     ProductModule,
     PurchaseModule,
+    ExpenseModule,
     SaleModule,
     ReportsModule,
     ClosingModule,

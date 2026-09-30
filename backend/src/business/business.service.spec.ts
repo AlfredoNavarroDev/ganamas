@@ -58,4 +58,14 @@ describe('BusinessService', () => {
       service.update('owner-1', 'missing', { active: false }),
     ).rejects.toThrow(NotFoundException);
   });
+
+  it('persists dailyProfitGoal as-is when updating', async () => {
+    repository.findOne.mockResolvedValue({ id: 'business-1', name: 'Frutas' });
+
+    await service.update('owner-1', 'business-1', { dailyProfitGoal: '200.00' });
+
+    expect(repository.save).toHaveBeenCalledWith(
+      expect.objectContaining({ dailyProfitGoal: '200.00' }),
+    );
+  });
 });

@@ -69,7 +69,7 @@ paginado.
 |---|---|
 | `businessId` | `@IsUUID()` |
 | `productId` | `@IsUUID()` |
-| `quantity` | `@IsNumberString()` — no valida positividad; la DB exige `CHECK (quantity > 0)` |
+| `quantity` | `@IsNumberString()` — no valida positividad en el DTO; la DB exige `CHECK (quantity > 0)`, mapeado a `400` por el filtro global de excepciones (ver README) |
 | `unitPrice` | opcional, `@IsNumberString()` — omitir usa el precio de catálogo |
 | `paymentMethod` | opcional, `@IsIn(['efectivo', 'yape', 'plin'])`, default `'efectivo'` |
 | `soldAt` | opcional, `@IsDateString()`, default `now()` |

@@ -16,8 +16,9 @@ frontend es un consumidor de esas reglas, no las redefine.
 | [login](./login.md) | `/login` | Autenticación, guarda el JWT |
 | [dashboard](./dashboard.md) | `/dashboard` | Selección/creación de negocio activo |
 | [products](./products.md) | `/dashboard/products` | CRUD de productos del negocio activo |
-| [sales](./sales.md) | `/dashboard/sales` | Registro de ventas del día, con regateo |
-| [kpis](./kpis.md) | `/dashboard/kpis` | Resumen día/semana/mes y cierre de día |
+| [sales](./sales.md) | `/dashboard/sales` | Registro de ventas del día, con regateo y edición rápida de precio |
+| [kpis](./kpis.md) | `/dashboard/kpis` | Resumen día/semana/mes, meta diaria de ganancia y cierre de día |
+| [expenses](./expenses.md) | `/dashboard/expenses` | Registro y listado de gastos del negocio activo |
 
 ## Convenciones transversales (no repetidas en cada página)
 

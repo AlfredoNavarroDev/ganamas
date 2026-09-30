@@ -7,9 +7,10 @@ página con pestañas de rango (día/semana/mes) y la única que escribe un
 **Archivos:** `app/dashboard/kpis/page.tsx`,
 `app/dashboard/kpis/page.test.tsx`.
 
-Esta página llama a `GET /reports/summary` (ver `docs/backend/reports.md`)
-y a `GET|POST /closings*` (ver `docs/backend/closing.md`) para el detalle
-de reglas de negocio del lado del servidor.
+Esta página llama a `GET /reports/summary` (ver `docs/backend/reports.md`),
+`GET|POST /closings*` (ver `docs/backend/closing.md`) y `GET|PATCH
+/businesses*` (ver `docs/backend/business.md`, sección "Meta diaria") para
+el detalle de reglas de negocio del lado del servidor.
 
 ## Comportamiento
 
@@ -48,6 +49,41 @@ variables `--glass-*`) sólo muestra `closedDate` y el snapshot de
 `revenue`/`profit` de cada cierre — no re-consulta `/reports/summary` para
 fechas pasadas, confía en el snapshot guardado al momento del cierre.
 
+## Meta diaria
+
+Tercer efecto (`loadBusiness`, disparado una vez al montar junto con
+`loadTodayClosing`/`loadHistory`): `GET /businesses?active=true` y busca el
+negocio activo en la lista para leer su `dailyProfitGoal` (ver
+`docs/backend/business.md`) — no hay endpoint dedicado, reusa la misma
+llamada que `dashboard` usa para el selector de negocio.
+
+Sólo se muestra en la pestaña "Día" (`activeTab === "day" && business`).
+`hasGoal` es la guarda central: `business.dailyProfitGoal != null &&
+Number(business.dailyProfitGoal) > 0` — un string vacío o `"0.00"` (que en
+JS son truthy) **no** cuentan como meta puesta, evita dividir por cero al
+calcular el porcentaje.
+
+- **Con meta y sin editar** (`hasGoal && !editingGoal`): barra de progreso
+  (`role="progressbar"`, `aria-valuenow`/`aria-valuemin`/`aria-valuemax`)
+  con `goalProgressPct = min(round(profit / meta * 100), 100)` — tope en
+  100% aunque la ganancia supere la meta. Botón "Editar" carga
+  `goalInput` con el valor actual y entra en modo edición.
+- **Sin meta, o editando** (`!hasGoal || editingGoal`): input +
+  "Guardar meta" (`disabled` mientras guarda o si el input está vacío) +
+  "Cancelar" (sólo visible si `hasGoal`, para no mostrar un botón que no
+  tiene a qué volver cuando todavía no hay meta puesta).
+- **Guardar:** `PATCH /businesses/:id { dailyProfitGoal: goalInput }`. Si
+  la DB rechaza el valor (`CHECK (daily_profit_goal > 0)`, ver
+  `docs/backend/business.md`), el filtro global de excepciones del backend
+  responde `400` y acá se muestra un toast genérico "No se pudo guardar la
+  meta." — no hay mensaje específico para "meta inválida" vs. otro tipo de
+  error 400.
+
+**Registrar un gasto no mueve esta barra**: `goalProgressPct` se calcula
+sobre `summary.profit`, que `reports` nunca resta por gastos (ver
+`docs/backend/expense.md`) — es una decisión de producto explícita, no un
+bug.
+
 ## Datos mostrados por `summary`
 
 `revenue`, `profit`, `count` (número de ventas), `avgTicket`, `topProduct`
@@ -60,4 +96,9 @@ período." en vez de una tabla vacía).
 `page.test.tsx` cubre: guards de redirección; cambio de pestaña dispara
 nueva carga de `summary` con el rango correcto; botón de cierre deshabilita
 tras un cierre exitoso; respuesta 409 muestra el toast específico sin
-romper el botón; historial se renderiza a partir de `GET /closings`.
+romper el botón; historial se renderiza a partir de `GET /closings`;
+muestra el input para poner meta cuando el negocio no tiene una; muestra
+progreso (`S/ X / S/ Y` + `%`) cuando sí tiene; guardar una meta nueva la
+persiste y actualiza el progreso mostrado. No hay un test que cubra
+`hasGoal` con `dailyProfitGoal: "0.00"` (el caso que la guarda existe
+específicamente para evitar) ni el botón "Cancelar".

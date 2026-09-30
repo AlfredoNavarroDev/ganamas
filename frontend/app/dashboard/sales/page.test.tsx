@@ -51,10 +51,13 @@ const sale = {
   soldAt: "2026-01-15T19:00:00.000Z",
 };
 
-function stubLoad(products: unknown[], sales: unknown[]) {
+function stubLoad(products: unknown[], sales: unknown[], patchedProduct?: unknown) {
   vi.stubGlobal(
     "fetch",
-    vi.fn(async (url: string) => {
+    vi.fn(async (url: string, init?: RequestInit) => {
+      if (url.includes("/products/") && init?.method === "PATCH") {
+        return jsonResponse(patchedProduct);
+      }
       if (url.includes("/products")) return jsonResponse(products);
       if (url.includes("/sales")) return jsonResponse({ data: sales, total: sales.length });
       throw new Error(`unexpected url ${url}`);
@@ -108,6 +111,25 @@ describe("SalesPage", () => {
 
     expect(await screen.findByText("Precio por kg")).toBeInTheDocument();
     expect(await screen.findByText(/S\/ 5\.00/)).toBeInTheDocument();
+  });
+
+  it("lets the seller update the catalog price without leaving the sales screen", async () => {
+    setToken("token-123");
+    setActiveBusinessId("biz-1");
+    const updatedProduct = { ...product, price: "6.00" };
+    stubLoad([product], [], updatedProduct);
+    const user = userEvent.setup();
+    renderPage();
+
+    await screen.findByText(/S\/ 5\.00/);
+    await user.click(screen.getByRole("button", { name: /editar precio/i }));
+
+    const priceInput = screen.getByLabelText(/nuevo precio/i);
+    await user.clear(priceInput);
+    await user.type(priceInput, "6.00");
+    await user.click(screen.getByRole("button", { name: /^guardar$/i }));
+
+    expect(await screen.findByText(/S\/ 6\.00/)).toBeInTheDocument();
   });
 
   it("shows the haggled discount next to a sale sold below the catalog price", async () => {

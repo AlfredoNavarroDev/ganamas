@@ -191,6 +191,13 @@ export default function DashboardPage() {
               <Button
                 variant="outline"
                 nativeButton={false}
+                render={<Link href="/dashboard/purchases" />}
+              >
+                Compras
+              </Button>
+              <Button
+                variant="outline"
+                nativeButton={false}
                 render={<Link href="/dashboard/kpis" />}
               >
                 Resumen

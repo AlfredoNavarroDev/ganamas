@@ -35,6 +35,7 @@ const sampleProduct = {
   unit: "kg",
   category: "palta",
   stock: "10.00",
+  avgCost: "3.00",
   active: true,
 };
 
@@ -139,6 +140,7 @@ const product = {
   unit: "kg" as const,
   category: null,
   stock: "24",
+  avgCost: "2.00",
   active: true,
 };
 

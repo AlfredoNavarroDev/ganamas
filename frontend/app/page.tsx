@@ -4,9 +4,15 @@ import { Badge } from "@/components/ui/badge";
 
 export default function Home() {
   return (
-    <main className="flex min-h-dvh flex-1 flex-col items-center justify-center px-6 py-16">
+    <main className="motion-safe:animate-in motion-safe:fade-in motion-safe:duration-500 flex min-h-dvh flex-1 flex-col items-center justify-center px-6 py-16">
       <div className="flex w-full max-w-lg flex-col items-center text-center">
-        
+        <Badge
+          variant="outline"
+          className="motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-bottom-2 motion-safe:duration-500"
+        >
+          Registro de ventas y compras
+        </Badge>
+
         <h1
           className="motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-bottom-2 motion-safe:duration-500 motion-safe:[animation-delay:75ms] motion-safe:fill-mode-backwards mt-5 text-6xl font-bold tracking-tight text-primary sm:text-7xl"
         >

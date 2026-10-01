@@ -49,6 +49,7 @@
 }
 
 :root {
+  color-scheme: dark;
   --background: oklch(0.14 0.02 335);
   --foreground: oklch(0.96 0.01 20);
   --card: oklch(0.20 0.03 330);
@@ -165,5 +166,14 @@
   }
   html {
     @apply font-sans;
+  }
+  /* `color-scheme: dark` alone doesn't restyle native <select> popups in
+     Chrome on Windows (it follows the OS app theme there, not page CSS) —
+     setting background-color/color directly on <option> is what Chrome
+     actually honors for the popup list, regardless of platform. */
+  select,
+  option {
+    background-color: var(--popover);
+    color: var(--popover-foreground);
   }
 }

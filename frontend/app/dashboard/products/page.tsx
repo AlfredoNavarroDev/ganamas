@@ -23,6 +23,7 @@ type Product = {
   unit: "unidad" | "kg";
   category: string | null;
   stock: string;
+  avgCost: string;
   active: boolean;
 };
 
@@ -357,6 +358,7 @@ export default function ProductsPage() {
                     <span className="text-sm text-muted-foreground">
                       {product.price} / {product.unit}
                       {product.category ? ` · ${product.category}` : ""} · stock {product.stock}
+                      {" "}· costo prom. S/ {product.avgCost}
                     </span>
                   </div>
                   <div className="flex gap-2">

@@ -37,17 +37,21 @@ const summary = {
   byPaymentMethod: [{ paymentMethod: "efectivo", revenue: "10.00" }],
 };
 
+const business = { id: "biz-1", name: "Frutas", active: true, dailyProfitGoal: null as string | null };
+
 function stubLoad(overrides: {
   summaryResponse?: unknown;
   todayStatus?: number;
   todayBody?: unknown;
   history?: unknown[];
+  businessResponse?: unknown;
 }) {
   const {
     summaryResponse = summary,
     todayStatus = 404,
     todayBody = null,
     history = [],
+    businessResponse = [business],
   } = overrides;
 
   vi.stubGlobal(
@@ -58,6 +62,7 @@ function stubLoad(overrides: {
         return todayStatus === 200 ? jsonResponse(todayBody) : jsonResponse({ message: "not found" }, 404);
       }
       if (url.includes("/closings")) return jsonResponse(history);
+      if (url.includes("/businesses")) return jsonResponse(businessResponse);
       throw new Error(`unexpected url ${url}`);
     }),
   );
@@ -201,5 +206,47 @@ describe("KpisPage", () => {
     await user.click(await screen.findByRole("button", { name: "Cerrar día" }));
 
     expect(await screen.findByText("El día ya estaba cerrado.")).toBeInTheDocument();
+  });
+
+  it("shows an input to set the goal when the business has none", async () => {
+    setToken("token-123");
+    setActiveBusinessId("biz-1");
+    stubLoad({});
+    renderPage();
+
+    expect(await screen.findByLabelText(/meta diaria de ganancia/i)).toBeInTheDocument();
+  });
+
+  it("shows progress against the goal when the business has one", async () => {
+    setToken("token-123");
+    setActiveBusinessId("biz-1");
+    stubLoad({ businessResponse: [{ ...business, dailyProfitGoal: "10.00" }] });
+    renderPage();
+
+    expect(await screen.findByText(/S\/ 4\.00 \/ S\/ 10\.00/)).toBeInTheDocument();
+    expect(screen.getByText("40%")).toBeInTheDocument();
+  });
+
+  it("saves a new daily goal", async () => {
+    setToken("token-123");
+    setActiveBusinessId("biz-1");
+    const fetchMock = vi.fn(async (url: string, init?: RequestInit) => {
+      if (url.includes("/reports/summary")) return jsonResponse(summary);
+      if (url.includes("/closings/today")) return jsonResponse({ message: "not found" }, 404);
+      if (url.includes("/closings")) return jsonResponse([]);
+      if (url.includes("/businesses/biz-1") && init?.method === "PATCH") {
+        return jsonResponse({ ...business, dailyProfitGoal: "10.00" });
+      }
+      if (url.includes("/businesses")) return jsonResponse([business]);
+      throw new Error(`unexpected url ${url}`);
+    });
+    vi.stubGlobal("fetch", fetchMock);
+    const user = userEvent.setup();
+    renderPage();
+
+    await user.type(await screen.findByLabelText(/meta diaria de ganancia/i), "10.00");
+    await user.click(screen.getByRole("button", { name: /guardar meta/i }));
+
+    expect(await screen.findByText(/S\/ 4\.00 \/ S\/ 10\.00/)).toBeInTheDocument();
   });
 });

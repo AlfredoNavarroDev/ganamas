@@ -173,7 +173,7 @@ export default function DashboardPage() {
           ) : null}
 
           {activeId ? (
-            <div className="flex gap-2">
+            <div className="flex flex-wrap gap-2">
               <Button
                 variant="outline"
                 nativeButton={false}
@@ -191,9 +191,23 @@ export default function DashboardPage() {
               <Button
                 variant="outline"
                 nativeButton={false}
+                render={<Link href="/dashboard/purchases" />}
+              >
+                Compras
+              </Button>
+              <Button
+                variant="outline"
+                nativeButton={false}
                 render={<Link href="/dashboard/kpis" />}
               >
                 Resumen
+              </Button>
+              <Button
+                variant="outline"
+                nativeButton={false}
+                render={<Link href="/dashboard/expenses" />}
+              >
+                Gastos
               </Button>
             </div>
           ) : null}

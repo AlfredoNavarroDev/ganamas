@@ -69,6 +69,10 @@ export default function SalesPage() {
   const [creating, setCreating] = useState(false);
   const [createError, setCreateError] = useState<string | null>(null);
 
+  const [editingPrice, setEditingPrice] = useState(false);
+  const [priceInput, setPriceInput] = useState("");
+  const [savingPrice, setSavingPrice] = useState(false);
+
   const [deleteTarget, setDeleteTarget] = useState<Sale | null>(null);
   const [deleting, setDeleting] = useState(false);
   const { toast } = useToast();
@@ -197,6 +201,29 @@ export default function SalesPage() {
     }
   }
 
+  async function handleSavePrice() {
+    if (!selectedProduct) return;
+    setSavingPrice(true);
+    try {
+      const res = await authFetch(`/products/${selectedProduct.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ price: priceInput }),
+      });
+      if (!res.ok) {
+        toast("No se pudo actualizar el precio.", "destructive");
+        return;
+      }
+      const updated = (await res.json()) as Product;
+      setProducts((prev) => (prev ?? []).map((p) => (p.id === updated.id ? updated : p)));
+      setEditingPrice(false);
+    } catch {
+      toast("No se pudo conectar con el servidor. Probá de nuevo.", "destructive");
+    } finally {
+      setSavingPrice(false);
+    }
+  }
+
   if (!checked) return null;
 
   if (sales === null && !loadError) {
@@ -236,7 +263,13 @@ export default function SalesPage() {
               <form onSubmit={handleCreateSale} className="flex flex-col gap-3">
                 <div className="flex flex-col gap-2">
                   <Label htmlFor="product">Producto</Label>
-                  <Select value={productId} onValueChange={(value) => setProductId(value as string)}>
+                  <Select
+                    value={productId}
+                    onValueChange={(value) => {
+                      setProductId(value as string);
+                      setEditingPrice(false);
+                    }}
+                  >
                     <SelectTrigger id="product">
                       <SelectValue>
                         {(value: string) => {
@@ -283,9 +316,53 @@ export default function SalesPage() {
                           <span className="text-muted-foreground">
                             Precio por {selectedProduct.unit}
                           </span>
-                          <span className="font-medium">
-                            {soles(selectedProduct.price)} × {quantity || 0}
-                          </span>
+                          {editingPrice ? (
+                            <div className="flex items-center gap-2">
+                              <Label htmlFor="new-price" className="sr-only">
+                                Nuevo precio
+                              </Label>
+                              <Input
+                                id="new-price"
+                                className="h-8 w-20"
+                                inputMode="decimal"
+                                value={priceInput}
+                                onChange={(e) => setPriceInput(e.target.value)}
+                              />
+                              <Button
+                                type="button"
+                                size="sm"
+                                disabled={savingPrice}
+                                onClick={handleSavePrice}
+                              >
+                                {savingPrice ? "Guardando…" : "Guardar"}
+                              </Button>
+                              <Button
+                                type="button"
+                                size="sm"
+                                variant="outline"
+                                onClick={() => setEditingPrice(false)}
+                              >
+                                Cancelar
+                              </Button>
+                            </div>
+                          ) : (
+                            <div className="flex items-center gap-2">
+                              <span className="font-medium">
+                                {soles(selectedProduct.price)} × {quantity || 0}
+                              </span>
+                              <Button
+                                type="button"
+                                size="sm"
+                                variant="outline"
+                                onClick={() => {
+                                  setPriceInput(selectedProduct.price);
+                                  setEditingPrice(true);
+                                }}
+                              >
+                                Editar precio
+                              </Button>
+                            </div>
+                          )}
                         </div>
                         <div className="flex items-center justify-between text-sm">
                           <span className="text-muted-foreground">Subtotal</span>

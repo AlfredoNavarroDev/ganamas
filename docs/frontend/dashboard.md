@@ -1,7 +1,7 @@
 # dashboard
 
 Hub post-login en `/dashboard`. Resuelve qué negocio está activo (o crea el
-primero) y da acceso a `products`, `sales` y `kpis`.
+primero) y da acceso a `products`, `sales`, `kpis` y `expenses`.
 
 **Archivos:** `app/dashboard/page.tsx`, `app/dashboard/page.test.tsx`.
 
@@ -31,9 +31,11 @@ Cambiar de negocio (`<Select>`, sólo visible si hay ≥1 negocio) llama a
 no dispara ningún refetch en esta página (las páginas hijas son las que
 leen el nuevo valor la próxima vez que montan).
 
-Los tres botones de navegación (Productos/Ventas/Resumen) sólo se renderizan
-si `activeId` no es null — no tiene sentido navegar a ellas sin negocio
-activo, y de hecho esas páginas redirigen de vuelta acá si no lo encuentran.
+Los cuatro botones de navegación (Productos/Ventas/Resumen/Gastos) sólo se
+renderizan si `activeId` no es null — no tiene sentido navegar a ellas sin
+negocio activo, y de hecho esas páginas redirigen de vuelta acá si no lo
+encuentran. La fila usa `flex flex-wrap` (no `flex` simple) para que los
+cuatro botones no se corten en viewports angostos (~360px).
 
 `handleLogout` limpia el token (no limpia el negocio activo guardado —
 si el mismo usuario vuelve a loguearse, ve el mismo negocio seleccionado).
@@ -43,4 +45,5 @@ si el mismo usuario vuelve a loguearse, ve el mismo negocio seleccionado).
 `page.test.tsx` cubre: redirección a `/login` sin token; alta del primer
 negocio cuando la lista viene vacía; selección del negocio guardado si
 sigue existiendo en la lista; caída al primero si el guardado ya no existe;
-logout limpia el token y navega a `/login`.
+logout limpia el token y navega a `/login`; el botón "Gastos" apunta a
+`/dashboard/expenses`.

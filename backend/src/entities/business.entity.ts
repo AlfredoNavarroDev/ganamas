@@ -30,6 +30,15 @@ export class Business {
   @Column({ default: true })
   active: boolean;
 
+  @Column({
+    name: 'daily_profit_goal',
+    type: 'numeric',
+    precision: 10,
+    scale: 2,
+    nullable: true,
+  })
+  dailyProfitGoal: string | null;
+
   @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;
 

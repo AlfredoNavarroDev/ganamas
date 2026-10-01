@@ -6,7 +6,7 @@ import { Expense } from '../entities/expense.entity';
 describe('ExpenseService', () => {
   let service: ExpenseService;
   let repository: {
-    create: jest.Mock;
+    create: jest.Mock<Partial<Expense>, [Partial<Expense>]>;
     save: jest.Mock;
     createQueryBuilder: jest.Mock;
   };

@@ -1,25 +1,33 @@
 import { INestApplication, ValidationPipe } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
 import request from 'supertest';
+import { Server } from 'http';
 import { AppModule } from '../src/app.module';
+import { TEST_USERNAME, TEST_PASSWORD } from './e2e-test-user';
 
 describe('Business (e2e)', () => {
-  let app: INestApplication;
+  let app: INestApplication<Server>;
   let token: string;
 
   beforeAll(async () => {
-    const moduleFixture = await Test.createTestingModule({ imports: [AppModule] }).compile();
+    const moduleFixture = await Test.createTestingModule({
+      imports: [AppModule],
+    }).compile();
     app = moduleFixture.createNestApplication();
     app.useGlobalPipes(
-      new ValidationPipe({ whitelist: true, forbidNonWhitelisted: true, transform: true }),
+      new ValidationPipe({
+        whitelist: true,
+        forbidNonWhitelisted: true,
+        transform: true,
+      }),
     );
     await app.init();
 
     const login = await request(app.getHttpServer()).post('/auth/login').send({
-      username: process.env.SEED_USERNAME,
-      password: process.env.SEED_PASSWORD,
+      username: TEST_USERNAME,
+      password: TEST_PASSWORD,
     });
-    token = login.body.accessToken;
+    token = (login.body as { accessToken: string }).accessToken;
   });
 
   afterAll(async () => {
@@ -39,19 +47,20 @@ describe('Business (e2e)', () => {
       .send({ name: uniqueName })
       .expect(201);
 
-    const businessId = createResponse.body.id;
+    const businessId = (createResponse.body as { id: string }).id;
 
     const listResponse = await request(app.getHttpServer())
       .get('/businesses')
       .set('Authorization', `Bearer ${token}`)
       .expect(200);
-    expect(listResponse.body.some((b: { id: string }) => b.id === businessId)).toBe(true);
+    const businesses = listResponse.body as { id: string }[];
+    expect(businesses.some((b) => b.id === businessId)).toBe(true);
 
     const updateResponse = await request(app.getHttpServer())
       .patch(`/businesses/${businessId}`)
       .set('Authorization', `Bearer ${token}`)
       .send({ active: false })
       .expect(200);
-    expect(updateResponse.body.active).toBe(false);
+    expect((updateResponse.body as { active: boolean }).active).toBe(false);
   });
 });

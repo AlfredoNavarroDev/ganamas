@@ -8,12 +8,15 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Badge } from "@/components/ui/badge";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/components/ui/toast";
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 import { getToken } from "@/lib/auth";
 import { getActiveBusinessId } from "@/lib/business";
 import { authFetch } from "@/lib/api";
+import { limaTodayRange } from "@/lib/date-ranges";
 
 type Product = {
   id: string;
@@ -28,13 +31,27 @@ type Sale = {
   id: string;
   product: { id: string; name: string; unit: "unidad" | "kg" };
   quantity: string;
+  listPrice: string;
   unitPrice: string;
+  discount: string;
   total: string;
   paymentMethod: "efectivo" | "yape" | "plin";
   soldAt: string;
 };
 
 const PAYMENT_METHODS: Sale["paymentMethod"][] = ["efectivo", "yape", "plin"];
+
+function formatLimaTime(iso: string): string {
+  return new Intl.DateTimeFormat("es-PE", {
+    timeZone: "America/Lima",
+    hour: "2-digit",
+    minute: "2-digit",
+  }).format(new Date(iso));
+}
+
+function soles(amount: string): string {
+  return `S/ ${amount}`;
+}
 
 export default function SalesPage() {
   const router = useRouter();
@@ -47,14 +64,26 @@ export default function SalesPage() {
 
   const [productId, setProductId] = useState("");
   const [quantity, setQuantity] = useState("");
-  const [unitPrice, setUnitPrice] = useState("");
+  const [discount, setDiscount] = useState("");
   const [paymentMethod, setPaymentMethod] = useState<Sale["paymentMethod"]>("efectivo");
   const [creating, setCreating] = useState(false);
   const [createError, setCreateError] = useState<string | null>(null);
 
+  const [editingPrice, setEditingPrice] = useState(false);
+  const [priceInput, setPriceInput] = useState("");
+  const [savingPrice, setSavingPrice] = useState(false);
+
   const [deleteTarget, setDeleteTarget] = useState<Sale | null>(null);
   const [deleting, setDeleting] = useState(false);
   const { toast } = useToast();
+
+  const selectedProduct = products?.find((p) => p.id === productId) ?? null;
+  const catalogPrice = selectedProduct ? Number(selectedProduct.price) : 0;
+  const parsedQuantity = Number(quantity) || 0;
+  const fullTotal = catalogPrice * parsedQuantity;
+  const discountAmount = Number(discount) || 0;
+  const totalToCharge = Math.max(fullTotal - discountAmount, 0);
+  const computedUnitPrice = parsedQuantity > 0 ? (totalToCharge / parsedQuantity).toFixed(2) : "0.00";
 
   useEffect(() => {
     if (!getToken()) {
@@ -83,7 +112,6 @@ export default function SalesPage() {
       setProducts(data);
       if (data.length > 0) {
         setProductId((prev) => prev || data[0].id);
-        setUnitPrice((prev) => prev || data[0].price);
       }
     } catch {
       setLoadError("No se pudo conectar con el servidor. Probá de nuevo.");
@@ -93,7 +121,10 @@ export default function SalesPage() {
   async function loadSales(activeBusinessId: string) {
     setLoadError(null);
     try {
-      const res = await authFetch(`/sales?businessId=${activeBusinessId}`);
+      const { from, to } = limaTodayRange();
+      const res = await authFetch(
+        `/sales?businessId=${activeBusinessId}&from=${from}&to=${to}`,
+      );
       if (!res.ok) {
         setLoadError("No se pudieron cargar tus ventas.");
         return;
@@ -103,12 +134,6 @@ export default function SalesPage() {
     } catch {
       setLoadError("No se pudo conectar con el servidor. Probá de nuevo.");
     }
-  }
-
-  function handleProductChange(id: string) {
-    setProductId(id);
-    const product = products?.find((p) => p.id === id);
-    if (product) setUnitPrice(product.price);
   }
 
   async function handleCreateSale(event: FormEvent<HTMLFormElement>) {
@@ -125,7 +150,7 @@ export default function SalesPage() {
           businessId,
           productId,
           quantity,
-          unitPrice,
+          unitPrice: computedUnitPrice,
           paymentMethod,
         }),
       });
@@ -141,6 +166,7 @@ export default function SalesPage() {
       const created = (await res.json()) as Sale;
       setSales((prev) => [created, ...(prev ?? [])]);
       setQuantity("");
+      setDiscount("");
       toast("Venta registrada");
       loadProducts(businessId);
     } catch {
@@ -172,6 +198,29 @@ export default function SalesPage() {
       toast("No se pudo eliminar la venta.", "destructive");
     } finally {
       setDeleting(false);
+    }
+  }
+
+  async function handleSavePrice() {
+    if (!selectedProduct) return;
+    setSavingPrice(true);
+    try {
+      const res = await authFetch(`/products/${selectedProduct.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ price: priceInput }),
+      });
+      if (!res.ok) {
+        toast("No se pudo actualizar el precio.", "destructive");
+        return;
+      }
+      const updated = (await res.json()) as Product;
+      setProducts((prev) => (prev ?? []).map((p) => (p.id === updated.id ? updated : p)));
+      setEditingPrice(false);
+    } catch {
+      toast("No se pudo conectar con el servidor. Probá de nuevo.", "destructive");
+    } finally {
+      setSavingPrice(false);
     }
   }
 
@@ -214,18 +263,29 @@ export default function SalesPage() {
               <form onSubmit={handleCreateSale} className="flex flex-col gap-3">
                 <div className="flex flex-col gap-2">
                   <Label htmlFor="product">Producto</Label>
-                  <select
-                    id="product"
+                  <Select
                     value={productId}
-                    onChange={(e) => handleProductChange(e.target.value)}
-                    className="h-9 rounded-md border border-input bg-transparent px-3 text-sm"
+                    onValueChange={(value) => {
+                      setProductId(value as string);
+                      setEditingPrice(false);
+                    }}
                   >
-                    {products?.map((p) => (
-                      <option key={p.id} value={p.id}>
-                        {p.name} ({p.stock} {p.unit})
-                      </option>
-                    ))}
-                  </select>
+                    <SelectTrigger id="product">
+                      <SelectValue>
+                        {(value: string) => {
+                          const product = products?.find((p) => p.id === value);
+                          return product ? `${product.name} (${product.stock} ${product.unit})` : value;
+                        }}
+                      </SelectValue>
+                    </SelectTrigger>
+                    <SelectContent>
+                      {products?.map((p) => (
+                        <SelectItem key={p.id} value={p.id}>
+                          {p.name} ({p.stock} {p.unit})
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
                 <div className="flex flex-col gap-2">
                   <Label htmlFor="quantity">Cantidad</Label>
@@ -238,31 +298,103 @@ export default function SalesPage() {
                   />
                 </div>
                 <div className="flex flex-col gap-2">
-                  <Label htmlFor="unit-price">Precio unitario</Label>
+                  <Label htmlFor="discount">Descuento (S/)</Label>
                   <Input
-                    id="unit-price"
-                    required
+                    id="discount"
                     inputMode="decimal"
-                    value={unitPrice}
-                    onChange={(e) => setUnitPrice(e.target.value)}
+                    placeholder="0.00"
+                    value={discount}
+                    onChange={(e) => setDiscount(e.target.value)}
                   />
+                  {selectedProduct ? (
+                    <>
+                      <p className="text-xs text-muted-foreground">
+                        Poné acá cuánto le rebajaste al cliente en total, si hubo regateo.
+                      </p>
+                      <div className="flex flex-col gap-1 rounded-md border bg-muted/40 p-3">
+                        <div className="flex items-center justify-between text-sm">
+                          <span className="text-muted-foreground">
+                            Precio por {selectedProduct.unit}
+                          </span>
+                          {editingPrice ? (
+                            <div className="flex items-center gap-2">
+                              <Label htmlFor="new-price" className="sr-only">
+                                Nuevo precio
+                              </Label>
+                              <Input
+                                id="new-price"
+                                className="h-8 w-20"
+                                inputMode="decimal"
+                                value={priceInput}
+                                onChange={(e) => setPriceInput(e.target.value)}
+                              />
+                              <Button
+                                type="button"
+                                size="sm"
+                                disabled={savingPrice}
+                                onClick={handleSavePrice}
+                              >
+                                {savingPrice ? "Guardando…" : "Guardar"}
+                              </Button>
+                              <Button
+                                type="button"
+                                size="sm"
+                                variant="outline"
+                                onClick={() => setEditingPrice(false)}
+                              >
+                                Cancelar
+                              </Button>
+                            </div>
+                          ) : (
+                            <div className="flex items-center gap-2">
+                              <span className="font-medium">
+                                {soles(selectedProduct.price)} × {quantity || 0}
+                              </span>
+                              <Button
+                                type="button"
+                                size="sm"
+                                variant="outline"
+                                onClick={() => {
+                                  setPriceInput(selectedProduct.price);
+                                  setEditingPrice(true);
+                                }}
+                              >
+                                Editar precio
+                              </Button>
+                            </div>
+                          )}
+                        </div>
+                        <div className="flex items-center justify-between text-sm">
+                          <span className="text-muted-foreground">Subtotal</span>
+                          <span className="font-medium">{soles(fullTotal.toFixed(2))}</span>
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm text-muted-foreground">Total a cobrar</span>
+                          <span className="text-2xl font-bold text-primary">
+                            {soles(totalToCharge.toFixed(2))}
+                          </span>
+                        </div>
+                      </div>
+                    </>
+                  ) : null}
                 </div>
                 <div className="flex flex-col gap-2">
                   <Label htmlFor="payment-method">Método de pago</Label>
-                  <select
-                    id="payment-method"
+                  <Select
                     value={paymentMethod}
-                    onChange={(e) =>
-                      setPaymentMethod(e.target.value as Sale["paymentMethod"])
-                    }
-                    className="h-9 rounded-md border border-input bg-transparent px-3 text-sm"
+                    onValueChange={(value) => setPaymentMethod(value as Sale["paymentMethod"])}
                   >
-                    {PAYMENT_METHODS.map((method) => (
-                      <option key={method} value={method}>
-                        {method}
-                      </option>
-                    ))}
-                  </select>
+                    <SelectTrigger id="payment-method">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {PAYMENT_METHODS.map((method) => (
+                        <SelectItem key={method} value={method}>
+                          {method}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
                 {createError ? (
                   <Alert variant="destructive" aria-live="polite">
@@ -292,12 +424,22 @@ export default function SalesPage() {
                 className="motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-bottom-2 motion-safe:duration-500 motion-safe:ease-[cubic-bezier(0.16,1,0.3,1)] motion-safe:fill-mode-backwards flex items-center justify-between gap-3 rounded-md border p-3"
                 style={{ animationDelay: `${index * 60}ms` }}
               >
-                <div className="flex flex-col">
-                  <span className="font-medium">{sale.product.name}</span>
+                <div className="flex flex-col gap-1">
+                  <div className="flex items-center gap-2">
+                    <span className="font-medium">{sale.product.name}</span>
+                    {Number(sale.discount) > 0 ? (
+                      <Badge variant="default">Regateo -{soles(sale.discount)}</Badge>
+                    ) : null}
+                  </div>
                   <span className="text-sm text-muted-foreground">
                     {sale.quantity} {sale.product.unit} × {sale.unitPrice} = {sale.total} ·{" "}
-                    {sale.paymentMethod}
+                    {sale.paymentMethod} · {formatLimaTime(sale.soldAt)}
                   </span>
+                  {Number(sale.discount) > 0 ? (
+                    <span className="text-xs text-muted-foreground">
+                      Precio de lista: {soles(sale.listPrice)}
+                    </span>
+                  ) : null}
                 </div>
                 <Button type="button" variant="outline" onClick={() => setDeleteTarget(sale)}>
                   Eliminar

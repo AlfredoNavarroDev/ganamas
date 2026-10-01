@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, type ChangeEvent, type FormEvent } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { LogOut } from "lucide-react";
@@ -11,6 +11,7 @@ import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/components/ui/toast";
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 import { clearToken, getToken } from "@/lib/auth";
 import { getActiveBusinessId, setActiveBusinessId } from "@/lib/business";
 import { authFetch } from "@/lib/api";
@@ -93,8 +94,7 @@ export default function DashboardPage() {
     }
   }
 
-  function handleSwitchBusiness(event: ChangeEvent<HTMLSelectElement>) {
-    const id = event.target.value;
+  function handleSwitchBusiness(id: string) {
     setActiveBusinessId(id);
     setActiveId(id);
   }
@@ -152,23 +152,28 @@ export default function DashboardPage() {
           {businesses && businesses.length > 0 ? (
             <div className="flex flex-col gap-2">
               <Label htmlFor="business-switch">Negocio activo</Label>
-              <select
-                id="business-switch"
+              <Select
                 value={activeId ?? ""}
-                onChange={handleSwitchBusiness}
-                className="h-9 rounded-md border border-input bg-transparent px-3 text-sm"
+                onValueChange={(value) => handleSwitchBusiness(value as string)}
               >
-                {businesses.map((b) => (
-                  <option key={b.id} value={b.id}>
-                    {b.name}
-                  </option>
-                ))}
-              </select>
+                <SelectTrigger id="business-switch">
+                  <SelectValue>
+                    {(value: string) => businesses.find((b) => b.id === value)?.name ?? value}
+                  </SelectValue>
+                </SelectTrigger>
+                <SelectContent>
+                  {businesses.map((b) => (
+                    <SelectItem key={b.id} value={b.id}>
+                      {b.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
           ) : null}
 
           {activeId ? (
-            <div className="flex gap-2">
+            <div className="flex flex-wrap gap-2">
               <Button
                 variant="outline"
                 nativeButton={false}
@@ -182,6 +187,27 @@ export default function DashboardPage() {
                 render={<Link href="/dashboard/sales" />}
               >
                 Ventas
+              </Button>
+              <Button
+                variant="outline"
+                nativeButton={false}
+                render={<Link href="/dashboard/purchases" />}
+              >
+                Compras
+              </Button>
+              <Button
+                variant="outline"
+                nativeButton={false}
+                render={<Link href="/dashboard/kpis" />}
+              >
+                Resumen
+              </Button>
+              <Button
+                variant="outline"
+                nativeButton={false}
+                render={<Link href="/dashboard/expenses" />}
+              >
+                Gastos
               </Button>
             </div>
           ) : null}

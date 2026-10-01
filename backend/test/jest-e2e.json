@@ -4,6 +4,7 @@
   "testEnvironment": "node",
   "testRegex": ".e2e-spec.ts$",
   "testTimeout": 20000,
+  "globalSetup": "<rootDir>/global-setup.js",
   "transform": {
     "^.+\\.(t|j)s$": "ts-jest"
   }

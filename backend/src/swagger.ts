@@ -6,13 +6,16 @@ export function setupSwagger(app: INestApplication) {
 
   const config = new DocumentBuilder()
     .setTitle('SAP hermana API')
-    .setDescription('API para registro de ventas, compras y reportes de negocios')
+    .setDescription(
+      'API para registro de ventas, compras y reportes de negocios',
+    )
     .setVersion('1.0')
     .addBearerAuth()
     .addTag('Auth')
     .addTag('Businesses')
     .addTag('Products')
     .addTag('Purchases')
+    .addTag('Expenses')
     .addTag('Sales')
     .addTag('Reports')
     .build();

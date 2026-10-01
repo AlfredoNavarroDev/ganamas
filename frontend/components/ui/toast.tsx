@@ -61,7 +61,7 @@ function ToastProvider({ children }: { children: React.ReactNode }) {
           <div
             key={t.id}
             className={cn(
-              "pointer-events-auto relative w-full max-w-sm overflow-hidden rounded-2xl border border-[color:var(--glass-border)] bg-[var(--glass-bg-strong)] py-2.5 pr-4 pl-5 text-sm text-foreground shadow-[var(--glass-shadow)] backdrop-blur-[var(--glass-blur)] before:absolute before:inset-y-0 before:left-0 before:w-1",
+              "pointer-events-auto relative w-full max-w-sm overflow-hidden rounded-2xl border border-(--glass-border) bg-(--glass-bg-strong) py-2.5 pr-4 pl-5 text-sm text-foreground shadow-(--glass-shadow) backdrop-blur-(--glass-blur) before:absolute before:inset-y-0 before:left-0 before:w-1",
               t.leaving
                 ? "motion-safe:animate-out motion-safe:fade-out motion-safe:duration-150"
                 : "motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-bottom-2 motion-safe:duration-300 motion-safe:ease-[cubic-bezier(0.16,1,0.3,1)]",

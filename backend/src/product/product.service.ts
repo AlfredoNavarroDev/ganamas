@@ -10,7 +10,8 @@ import { ListProductsQueryDto } from './dto/list-products-query.dto';
 @Injectable()
 export class ProductService {
   constructor(
-    @InjectRepository(Product) private readonly productRepository: Repository<Product>,
+    @InjectRepository(Product)
+    private readonly productRepository: Repository<Product>,
   ) {}
 
   create(dto: CreateProductDto) {

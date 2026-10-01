@@ -9,8 +9,6 @@ services:
       FRONTEND_URL: ${FRONTEND_URL:-http://localhost:3000}
       JWT_SECRET: ${JWT_SECRET:-change-me}
       JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-30d}
-      SEED_USERNAME: ${SEED_USERNAME:-admin}
-      SEED_PASSWORD: ${SEED_PASSWORD:-change-me}
       LOW_STOCK_THRESHOLD: ${LOW_STOCK_THRESHOLD:-5}
       PORT: 3000
       NODE_ENV: production

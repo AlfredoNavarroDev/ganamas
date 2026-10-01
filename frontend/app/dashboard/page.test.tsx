@@ -79,7 +79,7 @@ describe("DashboardPage", () => {
     await user.click(screen.getByRole("button", { name: /crear negocio/i }));
 
     await waitFor(() => expect(getActiveBusinessId()).toBe("biz-1"));
-    expect(await screen.findByRole("combobox", { name: /negocio activo/i })).toHaveValue("biz-1");
+    expect(await screen.findByRole("combobox", { name: /negocio activo/i })).toHaveTextContent("Frutas");
   });
 
   it("shows a toast after creating a business", async () => {
@@ -118,7 +118,7 @@ describe("DashboardPage", () => {
     render(<ToastProvider><DashboardPage /></ToastProvider>);
 
     const select = await screen.findByRole("combobox", { name: /negocio activo/i });
-    expect(select).toHaveValue("biz-1");
+    expect(select).toHaveTextContent("Frutas");
     await waitFor(() => expect(getActiveBusinessId()).toBe("biz-1"));
   });
 
@@ -133,7 +133,8 @@ describe("DashboardPage", () => {
     render(<ToastProvider><DashboardPage /></ToastProvider>);
 
     const select = await screen.findByRole("combobox", { name: /negocio activo/i });
-    await user.selectOptions(select, "biz-2");
+    await user.click(select);
+    await user.click(await screen.findByRole("option", { name: "Verduras" }));
 
     expect(getActiveBusinessId()).toBe("biz-2");
   });
@@ -154,6 +155,24 @@ describe("DashboardPage", () => {
 
     const link = await screen.findByRole("button", { name: /^ventas$/i });
     expect(link).toHaveAttribute("href", "/dashboard/sales");
+  });
+
+  it("shows a link to the summary page when a business is active", async () => {
+    setToken("token-123");
+    vi.stubGlobal("fetch", vi.fn(async () => jsonResponse([{ id: "biz-1", name: "Frutas", active: true }])));
+    render(<ToastProvider><DashboardPage /></ToastProvider>);
+
+    const link = await screen.findByRole("button", { name: /^resumen$/i });
+    expect(link).toHaveAttribute("href", "/dashboard/kpis");
+  });
+
+  it("shows a link to the expenses page when a business is active", async () => {
+    setToken("token-123");
+    vi.stubGlobal("fetch", vi.fn(async () => jsonResponse([{ id: "biz-1", name: "Frutas", active: true }])));
+    render(<ToastProvider><DashboardPage /></ToastProvider>);
+
+    const link = await screen.findByRole("button", { name: /^gastos$/i });
+    expect(link).toHaveAttribute("href", "/dashboard/expenses");
   });
 
   it("shows an error alert when businesses fail to load", async () => {

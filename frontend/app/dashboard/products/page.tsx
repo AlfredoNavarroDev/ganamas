@@ -11,6 +11,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/components/ui/toast";
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 import { getToken } from "@/lib/auth";
 import { getActiveBusinessId } from "@/lib/business";
 import { authFetch } from "@/lib/api";
@@ -22,6 +23,7 @@ type Product = {
   unit: "unidad" | "kg";
   category: string | null;
   stock: string;
+  avgCost: string;
   active: boolean;
 };
 
@@ -246,17 +248,20 @@ export default function ProductsPage() {
               </div>
               <div className="flex flex-col gap-2">
                 <Label htmlFor="unit">Unidad</Label>
-                <select
-                  id="unit"
+                <Select
                   value={newProduct.unit}
-                  onChange={(e) =>
-                    setNewProduct((v) => ({ ...v, unit: e.target.value as "unidad" | "kg" }))
+                  onValueChange={(value) =>
+                    setNewProduct((v) => ({ ...v, unit: value as "unidad" | "kg" }))
                   }
-                  className="h-9 rounded-md border border-input bg-transparent px-3 text-sm"
                 >
-                  <option value="unidad">unidad</option>
-                  <option value="kg">kg</option>
-                </select>
+                  <SelectTrigger id="unit">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="unidad">unidad</SelectItem>
+                    <SelectItem value="kg">kg</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
               <div className="flex flex-col gap-2">
                 <Label htmlFor="category">Categoría</Label>
@@ -304,17 +309,20 @@ export default function ProductsPage() {
                     onChange={(e) => setEditValues((v) => ({ ...v, price: e.target.value }))}
                   />
                   <Label htmlFor="edit-unit">Unidad</Label>
-                  <select
-                    id="edit-unit"
+                  <Select
                     value={editValues.unit}
-                    onChange={(e) =>
-                      setEditValues((v) => ({ ...v, unit: e.target.value as "unidad" | "kg" }))
+                    onValueChange={(value) =>
+                      setEditValues((v) => ({ ...v, unit: value as "unidad" | "kg" }))
                     }
-                    className="h-9 rounded-md border border-input bg-transparent px-3 text-sm"
                   >
-                    <option value="unidad">unidad</option>
-                    <option value="kg">kg</option>
-                  </select>
+                    <SelectTrigger id="edit-unit">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="unidad">unidad</SelectItem>
+                      <SelectItem value="kg">kg</SelectItem>
+                    </SelectContent>
+                  </Select>
                   <Label htmlFor="edit-category">Categoría</Label>
                   <Input
                     id="edit-category"
@@ -350,6 +358,7 @@ export default function ProductsPage() {
                     <span className="text-sm text-muted-foreground">
                       {product.price} / {product.unit}
                       {product.category ? ` · ${product.category}` : ""} · stock {product.stock}
+                      {" "}· costo prom. S/ {product.avgCost}
                     </span>
                   </div>
                   <div className="flex gap-2">

@@ -9,7 +9,10 @@ describe('SaleService', () => {
   let service: SaleService;
   let manager: {
     findOne: jest.Mock;
-    save: jest.Mock;
+    save: jest.Mock<
+      Promise<Record<string, unknown>>,
+      [Record<string, unknown>]
+    >;
     create: jest.Mock;
     remove: jest.Mock;
   };
@@ -18,11 +21,19 @@ describe('SaleService', () => {
   beforeEach(async () => {
     manager = {
       findOne: jest.fn(),
-      save: jest.fn((entity) => Promise.resolve(entity)),
-      create: jest.fn((_entityClass, plain) => plain),
+      save: jest.fn((entity: Record<string, unknown>) =>
+        Promise.resolve(entity),
+      ),
+      create: jest.fn(
+        (_entityClass: unknown, plain: Record<string, unknown>) => plain,
+      ),
       remove: jest.fn().mockResolvedValue(undefined),
     };
-    dataSource = { transaction: jest.fn((callback) => callback(manager)) };
+    dataSource = {
+      transaction: jest.fn((callback: (manager: unknown) => unknown) =>
+        callback(manager),
+      ),
+    };
 
     const module = await Test.createTestingModule({
       providers: [

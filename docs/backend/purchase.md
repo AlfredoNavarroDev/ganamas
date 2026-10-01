@@ -50,7 +50,7 @@ la aproximación elegida para el tamaño de este negocio.
 |---|---|
 | `businessId` | `@IsUUID()` |
 | `productId` | `@IsUUID()` |
-| `quantity` | `@IsNumberString()` — **no valida positividad**; la DB sí exige `CHECK (quantity > 0)`, así que `0` o negativo responde `500`, no `400` |
+| `quantity` | `@IsNumberString()` — **no valida positividad** en el DTO; la DB exige `CHECK (quantity > 0)`, mapeado a `400` por el filtro global de excepciones (ver README) |
 | `unitCost` | `@IsNumberString()` — mismo caso que `quantity` |
 | `purchasedAt` | opcional, `@IsDateString()`, default `now()` |
 

@@ -1,11 +1,19 @@
 .worktrees/
 .env
+.superpowers/
+.impeccable/
+.playwright-mcp/
+/*.png
 
-# docs/ tracks only the backend module documentation (docs/backend/) —
+# docs/ tracks only the generated reference docs (docs/backend/, docs/frontend/, docs/deployment/) —
 # everything else (planning specs, one-off plans, scratch notes) stays local
 docs/*
 !docs/backend
 !docs/backend/**
+!docs/frontend
+!docs/frontend/**
+!docs/deployment
+!docs/deployment/**
 .neon
 .env.neon
 node_modules/

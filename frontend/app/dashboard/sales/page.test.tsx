@@ -44,16 +44,20 @@ const sale = {
   quantity: "2.00",
   unitPrice: "5.00",
   listPrice: "5.00",
+  discount: "0.00",
   total: "10.00",
   profit: "4.00",
   paymentMethod: "efectivo",
   soldAt: "2026-01-15T19:00:00.000Z",
 };
 
-function stubLoad(products: unknown[], sales: unknown[]) {
+function stubLoad(products: unknown[], sales: unknown[], patchedProduct?: unknown) {
   vi.stubGlobal(
     "fetch",
-    vi.fn(async (url: string) => {
+    vi.fn(async (url: string, init?: RequestInit) => {
+      if (url.includes("/products/") && init?.method === "PATCH") {
+        return jsonResponse(patchedProduct);
+      }
       if (url.includes("/products")) return jsonResponse(products);
       if (url.includes("/sales")) return jsonResponse({ data: sales, total: sales.length });
       throw new Error(`unexpected url ${url}`);
@@ -94,17 +98,87 @@ describe("SalesPage", () => {
     stubLoad([product], [sale]);
     renderPage();
 
-    expect(await screen.findByText(/2\.00 kg × 5\.00 = 10\.00 · efectivo/)).toBeInTheDocument();
+    expect(
+      await screen.findByText(/2\.00 kg × 5\.00 = 10\.00 · efectivo · 02:00 p\. m\./),
+    ).toBeInTheDocument();
   });
 
-  it("prefills the unit price with the selected product's catalog price", async () => {
+  it("shows the catalog price as a hint so the seller knows they can haggle it down", async () => {
     setToken("token-123");
     setActiveBusinessId("biz-1");
     stubLoad([product], []);
     renderPage();
 
-    const priceInput = await screen.findByLabelText(/precio unitario/i);
-    await waitFor(() => expect(priceInput).toHaveValue("5.00"));
+    expect(await screen.findByText("Precio por kg")).toBeInTheDocument();
+    expect(await screen.findByText(/S\/ 5\.00/)).toBeInTheDocument();
+  });
+
+  it("lets the seller update the catalog price without leaving the sales screen", async () => {
+    setToken("token-123");
+    setActiveBusinessId("biz-1");
+    const updatedProduct = { ...product, price: "6.00" };
+    stubLoad([product], [], updatedProduct);
+    const user = userEvent.setup();
+    renderPage();
+
+    await screen.findByText(/S\/ 5\.00/);
+    await user.click(screen.getByRole("button", { name: /editar precio/i }));
+
+    const priceInput = screen.getByLabelText(/nuevo precio/i);
+    await user.clear(priceInput);
+    await user.type(priceInput, "6.00");
+    await user.click(screen.getByRole("button", { name: /^guardar$/i }));
+
+    expect(await screen.findByText(/S\/ 6\.00/)).toBeInTheDocument();
+  });
+
+  it("shows the haggled discount next to a sale sold below the catalog price", async () => {
+    setToken("token-123");
+    setActiveBusinessId("biz-1");
+    const haggledSale = { ...sale, unitPrice: "4.50", total: "9.00", discount: "1.00" };
+    stubLoad([product], [haggledSale]);
+    renderPage();
+
+    expect(await screen.findByText("Regateo -S/ 1.00")).toBeInTheDocument();
+    expect(await screen.findByText(/^precio de lista: S\/ 5\.00$/i)).toBeInTheDocument();
+  });
+
+  it("does not show a discount badge for a sale sold at the catalog price", async () => {
+    setToken("token-123");
+    setActiveBusinessId("biz-1");
+    stubLoad([product], [sale]);
+    renderPage();
+
+    await screen.findByText("Palta hass");
+    expect(screen.queryByText(/^Regateo -/)).not.toBeInTheDocument();
+  });
+
+  it("computes the total to charge from quantity and defaults the discount to zero", async () => {
+    setToken("token-123");
+    setActiveBusinessId("biz-1");
+    stubLoad([product], []);
+    const user = userEvent.setup();
+    renderPage();
+
+    await user.type(await screen.findByLabelText(/^cantidad$/i), "2");
+
+    expect(await screen.findByText("Precio por kg")).toBeInTheDocument();
+    expect(await screen.findByText(/S\/ 5\.00 × 2/)).toBeInTheDocument();
+    expect(await screen.findByText("Total a cobrar")).toBeInTheDocument();
+    expect(await screen.findAllByText("S/ 10.00")).toHaveLength(2);
+  });
+
+  it("subtracts the entered discount from the total to charge", async () => {
+    setToken("token-123");
+    setActiveBusinessId("biz-1");
+    stubLoad([product], []);
+    const user = userEvent.setup();
+    renderPage();
+
+    await user.type(await screen.findByLabelText(/^cantidad$/i), "2");
+    await user.type(screen.getByLabelText(/descuento/i), "1");
+
+    expect(await screen.findByText("S/ 9.00")).toBeInTheDocument();
   });
 
   it("registers a sale", async () => {
@@ -120,11 +194,13 @@ describe("SalesPage", () => {
     const user = userEvent.setup();
     renderPage();
 
-    await screen.findByLabelText(/precio unitario/i);
+    await screen.findByLabelText(/descuento/i);
     await user.type(screen.getByLabelText(/^cantidad$/i), "2");
     await user.click(screen.getByRole("button", { name: /registrar venta/i }));
 
-    expect(await screen.findByText(/2\.00 kg × 5\.00 = 10\.00 · efectivo/)).toBeInTheDocument();
+    expect(
+      await screen.findByText(/2\.00 kg × 5\.00 = 10\.00 · efectivo · 02:00 p\. m\./),
+    ).toBeInTheDocument();
   });
 
   it("shows a translated error when stock is insufficient", async () => {
@@ -142,7 +218,7 @@ describe("SalesPage", () => {
     const user = userEvent.setup();
     renderPage();
 
-    await screen.findByLabelText(/precio unitario/i);
+    await screen.findByLabelText(/descuento/i);
     await user.type(screen.getByLabelText(/^cantidad$/i), "999");
     await user.click(screen.getByRole("button", { name: /registrar venta/i }));
 

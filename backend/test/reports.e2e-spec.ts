@@ -1,39 +1,50 @@
 import { INestApplication, ValidationPipe } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
 import request from 'supertest';
+import { DataSource } from 'typeorm';
+import { Server } from 'http';
 import { AppModule } from '../src/app.module';
+import { TEST_USERNAME, TEST_PASSWORD } from './e2e-test-user';
 
 describe('Reports (e2e)', () => {
-  let app: INestApplication;
+  let app: INestApplication<Server>;
+  let dataSource: DataSource;
   let token: string;
   let businessId: string;
   let productId: string;
 
   beforeAll(async () => {
-    const moduleFixture = await Test.createTestingModule({ imports: [AppModule] }).compile();
+    const moduleFixture = await Test.createTestingModule({
+      imports: [AppModule],
+    }).compile();
     app = moduleFixture.createNestApplication();
     app.useGlobalPipes(
-      new ValidationPipe({ whitelist: true, forbidNonWhitelisted: true, transform: true }),
+      new ValidationPipe({
+        whitelist: true,
+        forbidNonWhitelisted: true,
+        transform: true,
+      }),
     );
     await app.init();
+    dataSource = app.get(DataSource);
 
     const login = await request(app.getHttpServer()).post('/auth/login').send({
-      username: process.env.SEED_USERNAME,
-      password: process.env.SEED_PASSWORD,
+      username: TEST_USERNAME,
+      password: TEST_PASSWORD,
     });
-    token = login.body.accessToken;
+    token = (login.body as { accessToken: string }).accessToken;
 
     const business = await request(app.getHttpServer())
       .post('/businesses')
       .set('Authorization', `Bearer ${token}`)
       .send({ name: `Reports test business ${Date.now()}` });
-    businessId = business.body.id;
+    businessId = (business.body as { id: string }).id;
 
     const product = await request(app.getHttpServer())
       .post('/products')
       .set('Authorization', `Bearer ${token}`)
       .send({ businessId, name: 'Palta hass', price: '5.00', unit: 'kg' });
-    productId = product.body.id;
+    productId = (product.body as { id: string }).id;
 
     await request(app.getHttpServer())
       .post('/purchases')
@@ -56,36 +67,80 @@ describe('Reports (e2e)', () => {
   });
 
   afterAll(async () => {
+    await dataSource.query('DELETE FROM sale WHERE business_id = $1', [
+      businessId,
+    ]);
+    await dataSource.query('DELETE FROM purchase WHERE business_id = $1', [
+      businessId,
+    ]);
+    await dataSource.query('DELETE FROM product WHERE business_id = $1', [
+      businessId,
+    ]);
+    await dataSource.query('DELETE FROM business WHERE id = $1', [businessId]);
     await app.close();
   });
 
   it('groups the Sunday-7pm-Lima sale as Sunday, not Monday', async () => {
     const response = await request(app.getHttpServer())
       .get('/reports/weekly-summary')
-      .query({ businessId, from: '2026-01-04T00:00:00.000Z', to: '2026-01-11T00:00:00.000Z' })
+      .query({
+        businessId,
+        from: '2026-01-04T00:00:00.000Z',
+        to: '2026-01-11T00:00:00.000Z',
+      })
       .set('Authorization', `Bearer ${token}`)
       .expect(200);
 
-    const sundayRow = response.body.daily.find(
-      (row: { day: string }) => row.day === '2026-01-04',
-    );
-    const mondayRow = response.body.daily.find(
-      (row: { day: string }) => row.day === '2026-01-05',
-    );
+    const body = response.body as {
+      daily: { day: string; revenue: string }[];
+    };
+    const sundayRow = body.daily.find((row) => row.day === '2026-01-04');
+    const mondayRow = body.daily.find((row) => row.day === '2026-01-05');
 
     expect(sundayRow).toBeDefined();
-    expect(Number(sundayRow.revenue)).toBeCloseTo(5.0, 2);
+    expect(Number(sundayRow?.revenue)).toBeCloseTo(5.0, 2);
     expect(mondayRow).toBeUndefined();
   });
 
   it('flags the product under the low-stock threshold in kpis', async () => {
     const response = await request(app.getHttpServer())
       .get('/reports/kpis')
-      .query({ businessId, from: '2026-01-01T00:00:00.000Z', to: '2026-01-11T00:00:00.000Z' })
+      .query({
+        businessId,
+        from: '2026-01-01T00:00:00.000Z',
+        to: '2026-01-11T00:00:00.000Z',
+      })
       .set('Authorization', `Bearer ${token}`)
       .expect(200);
 
-    expect(response.body.lowStock).toEqual([]);
-    expect(response.body.topProducts[0].productId).toBe(productId);
+    const body = response.body as {
+      lowStock: unknown[];
+      topProducts: { productId: string }[];
+    };
+    expect(body.lowStock).toEqual([]);
+    expect(body.topProducts[0].productId).toBe(productId);
+  });
+
+  it('computes revenue, profit, count and avgTicket for a range', async () => {
+    const response = await request(app.getHttpServer())
+      .get('/reports/summary')
+      .query({
+        businessId,
+        from: '2026-01-01T00:00:00.000Z',
+        to: '2026-01-11T00:00:00.000Z',
+      })
+      .set('Authorization', `Bearer ${token}`)
+      .expect(200);
+
+    const body = response.body as {
+      count: number;
+      revenue: string;
+      avgTicket: string;
+      topProduct: { productId: string };
+    };
+    expect(body.count).toBe(1);
+    expect(Number(body.revenue)).toBeCloseTo(5.0, 2);
+    expect(Number(body.avgTicket)).toBeCloseTo(5.0, 2);
+    expect(body.topProduct.productId).toBe(productId);
   });
 });

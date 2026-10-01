@@ -37,7 +37,13 @@ export class Product {
   @Column({ type: 'numeric', precision: 10, scale: 2, default: 0 })
   stock: string;
 
-  @Column({ name: 'avg_cost', type: 'numeric', precision: 10, scale: 2, default: 0 })
+  @Column({
+    name: 'avg_cost',
+    type: 'numeric',
+    precision: 10,
+    scale: 2,
+    default: 0,
+  })
   avgCost: string;
 
   @Column({ default: true })
